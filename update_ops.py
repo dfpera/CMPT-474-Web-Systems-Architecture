@@ -26,8 +26,9 @@ def add_activity(table, id, activity, response):
                     }
                 }
 
-
+	except ItemNotFound as inf:
         response.status = 404
+
         return {
                     "errors": [{
                         "not_found": {
