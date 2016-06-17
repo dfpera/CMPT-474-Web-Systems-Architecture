@@ -10,6 +10,11 @@ def delete_by_id(table, id, response):
         response.status = 404
         p = Item(table, data={'id': id })
         p.delete()
+        return {"data": {
+            "type": "person",
+            "id": id 
+            }
+        }
 
     except ItemNotFound as inf:
         response.status = 201 # "Created"
