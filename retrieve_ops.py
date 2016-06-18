@@ -37,10 +37,12 @@ def retrieve_users(table, response):
 
 def retrieve_by_name(table, name, response):
 	try:
+		print "working"
 		item = table.get_item(name=name)
+		print "still working"
 		response.status = 200
 		activities = item['activities']
-		if activities = None:
+		if activities == None:
 			activities = []
 		print "User found"
 		return {"data": {
