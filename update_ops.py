@@ -30,7 +30,7 @@ def add_activity(table, id, activity, response):
     return {"data": {
     "type": "person",
     "id": id,
-    "added": []
+    "added": [activity]
     }
     }
 
@@ -43,3 +43,33 @@ def add_activity(table, id, activity, response):
         }
         }]
         }
+
+def del_activity(table, id, activity, response):
+  try:
+    item = table.get_item(id=id)
+    response.status = 200
+    if item['activities'] != None:
+      if activity in item['activities']:
+        item['activities'].remove(activity)
+        item.save()
+        return {"data": {
+        "type": "person",
+        "id": id,
+        "deleted": [activity]
+        }
+        }
+    return {"data": {
+        "type": "person",
+        "id": id,
+        "deleted": []
+        }
+        }
+
+  except ItemNotFound as inf:
+    response.status = 404
+    return {"errors": [{
+    "not_found": {
+    "id": id
+    }
+    }]
+    }
