@@ -7,9 +7,8 @@ from boto.dynamodb2.exceptions import ItemNotFound
 def delete_by_id(table, id, response):
     try:
         item = table.get_item(id = id)
-        response.status = 404
-        p = Item(table, data = {'id': id })
-        p.delete()
+        response.status = 200
+        item.delete()
         return {"data": {
             "type": "person",
             "id": id 
@@ -17,7 +16,27 @@ def delete_by_id(table, id, response):
         }
 
     except ItemNotFound as inf:
-        response.status = 201 # "Created"
+        response.status = 404 # "Delete"
+        return {"errors": [{
+                  "not_found": {
+                    "id": id
+                    }
+                }]
+            }
+
+def delete_by_name(table, name, response):
+    try:
+        item = table.get_item({name : name})
+        response.status = 200
+        item.delete()
+        return {"data": {
+            "type": "person",
+            "name": name
+            }
+        }
+
+    except ItemNotFound as inf:
+        response.status = 404 # "Delete"
         return {"errors": [{
                   "not_found": {
                     "id": id
