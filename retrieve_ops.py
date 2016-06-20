@@ -28,7 +28,7 @@ def retrieve_by_id(table, id, response):
 					}
 				}]
 			}
-
+#
 def retrieve_users(table, response):
 	print "Retrieve users not yet implemented"
 	response.status = 501
