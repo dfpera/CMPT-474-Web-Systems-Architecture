@@ -25,21 +25,20 @@ def delete_by_id(table, id, response):
             }
 
 def delete_by_name(table, name, response):
-    try:
-        item = table.get_item({name : name})
+    items = table.scan(name__eq = name)
+    for item in items:
         response.status = 200
+        id = item["id"];
         item.delete()
         return {"data": {
             "type": "person",
-            "name": name
+            "id": id
             }
         }
-
-    except ItemNotFound as inf:
-        response.status = 404 # "Delete"
-        return {"errors": [{
-                  "not_found": {
-                    "id": id
-                    }
-                }]
-            }
+    response.status = 404 # "Delete"
+    return {"errors": [{
+              "not_found": {
+                "name": name
+                }
+            }]
+        }
