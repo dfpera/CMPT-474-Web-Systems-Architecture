@@ -4,7 +4,6 @@ from boto.dynamodb2.items import Item
 from boto.dynamodb2.exceptions import ItemNotFound
 
 def retrieve_by_id(table, id, response):
-	print "Initialize Retrieve"
 	try:
 		item = table.get_item(id=id)
 		response.status = 200 # item found
@@ -13,7 +12,7 @@ def retrieve_by_id(table, id, response):
 			activities = []
 		print "User found"
 		return {"data": {
-					"type": item['type'],
+					"type": "person",
 					"id": id,
 					"name": item['name'],
 					"activities": activities
@@ -56,8 +55,25 @@ def retrieve_users(table, response):
 	
 
 def retrieve_by_name(table, name, response):
-	print "Retrieve by name not yet implented"
-	response.status = 501
-	return {"errors": [{
-		"retrieve by name not implemented": {"name": name}
-		}]}
+	try:
+		item = table.scan(name__eq = name)
+		response.status = 200
+		activities = item['activities']
+		if activities == None:
+			activities = []
+		return {"data": {
+					"type": "person",
+					"id": int(item['id']),
+					"name": name,
+					"activities": activities
+				}
+			}
+	except ItemNotFound as inf:
+		print "User not found"
+		response.status = 404
+		return {"errors": [{
+					"not found" : {
+						"name": name
+					}
+				}]
+			}

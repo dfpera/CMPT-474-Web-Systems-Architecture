@@ -56,12 +56,11 @@ def get_users_route():
 
     return retrieve_ops.retrieve_users(table, response)
 
-@get('/users/<name>')
+@get('/names/<name>')
 def get_name_route(name):
     print "Retrieving name {0}\n".format(name)
     
     return retrieve_ops.retrieve_by_name(table, name, response)
-
 
 @delete('/users/<id>')
 def delete_id_route(id):
@@ -70,6 +69,11 @@ def delete_id_route(id):
     print "Deleting id {0}\n".format(id)
 
     return delete_ops.delete_by_id(table, id, response)
+
+@delete('/names/<name>')
+def delete_name_route(name):
+    print "Deleting name {0}\n".format(name)
+    return delete_ops.delete_by_name(table, name, response)
 
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
