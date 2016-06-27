@@ -2,6 +2,8 @@
 
 from boto.dynamodb2.items import Item
 from boto.dynamodb2.exceptions import ItemNotFound
+ #!/usr/local/bin/python
+import json
 
 def retrieve_by_id(table, id, response):
 	try:
@@ -27,13 +29,19 @@ def retrieve_by_id(table, id, response):
 					}
 				}]
 			}
-
+#
 def retrieve_users(table, response):
-	print "Retrieve users not yet implemented"
-	response.status = 501
-	return {"errors": [{
-		"retrieve users not implemented": " "
-		}]}
+	print "Retrieve users"
+	item = table.scan()
+	for i in item:
+		obj = {
+			"id": "users",
+			"name": i['name']
+		}
+	return (json.dumps(obj,indent=4))
+
+
+			
 
 def retrieve_by_name(table, name, response):
 	try:
