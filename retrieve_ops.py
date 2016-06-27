@@ -30,11 +30,30 @@ def retrieve_by_id(table, id, response):
 			}
 #
 def retrieve_users(table, response):
-	print "Retrieve users not yet implemented"
-	response.status = 501
-	return {"errors": [{
-		"retrieve users not implemented": " "
-		}]}
+	print "Retrieve users"
+	try:
+		item = table.scan()
+		if item['id'] != None:
+			response.status = 200 #item found 
+			for i in table:
+				return{"data": {
+							"type": item['type'],
+							"id": id,
+							"name": item['name'],
+							"activities": activities
+					    }
+				}
+
+	except ItemNotFound as inf:
+		print "No Records"
+		response.status = 404 # item not found 
+		return {"errors": [{
+				 "not_found": {
+				 		"id": id
+				 	}
+				 }]
+				}
+	
 
 def retrieve_by_name(table, name, response):
 	print "Retrieve by name not yet implented"
