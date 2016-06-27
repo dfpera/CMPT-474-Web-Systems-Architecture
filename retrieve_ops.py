@@ -12,7 +12,7 @@ def retrieve_by_id(table, id, response):
 			activities = []
 		print "User found"
 		return {"data": {
-					"type": item['type'],
+					"type": "person",
 					"id": id,
 					"name": item['name'],
 					"activities": activities
@@ -37,16 +37,13 @@ def retrieve_users(table, response):
 
 def retrieve_by_name(table, name, response):
 	try:
-		print "working"
-		item = table.get_item(name=name)
-		print "still working"
+		item = table.scan(name__eq = name)
 		response.status = 200
 		activities = item['activities']
 		if activities == None:
 			activities = []
-		print "User found"
 		return {"data": {
-					"type": item['type'],
+					"type": "person",
 					"id": int(item['id']),
 					"name": name,
 					"activities": activities
