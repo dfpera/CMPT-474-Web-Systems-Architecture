@@ -17,13 +17,15 @@ def retrieve_by_id(table, id, response):
 		item = table.get_item(id=id)
 		response.status = 200 # item found
 		activities = item['activities']
-		if activities == None:
-			activities = []
+		json_activities = []
+		if activities != None:
+                        for activity in activities:
+                                json_activities.append(activity)
 		return {"data": {
 					"type": "person",
 					"id": id,
 					"name": item['name'],
-					"activities": activities
+					"activities": json_activities
 				}
 			}
 	except ItemNotFound as inf:
@@ -53,10 +55,11 @@ def retrieve_by_name(table, name, response):
                 response.status = 200
                 id = int(item["id"])
                 activities = item['activities']
-                if activities == None:
-                	json_activities = []
-                else:
-                	json_activities = json.dumps(activities, cls = SetEncoder)    
+                json_activities = []
+                if activities != None:
+                	for activity in activities:
+                		json_activities.append(activity)
+
                 return {"data": {
                         "type": "person",
                         "id": id, 
