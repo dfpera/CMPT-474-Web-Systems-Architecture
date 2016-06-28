@@ -28,7 +28,7 @@ def delete_by_name(table, name, response):
     items = table.scan(name__eq = name)
     for item in items:
         response.status = 200
-        id = item["id"];
+        id = int(item["id"])
         item.delete()
         return {"data": {
             "type": "person",
