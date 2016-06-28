@@ -3,23 +3,12 @@
 from boto.dynamodb2.items import Item
 from boto.dynamodb2.exceptions import ItemNotFound
 
-import json
-class SetEncoder(json.JSONEncoder):
-  def default(self, obj):
-    if isinstance(obj, set):
-      return list(obj)
-    if isinstance(obj, Something):
-      return 'CustomSomethingRepresentation'
-    return json.JSONEncoder.default(self, obj)
-
 def add_activity(table, id, activity, response):
   try:
-    item = table.get_item(id = id)
+    item = table.get_item(id=id)
     response.status = 200
-    print "type: " + type(activity)
     if item['activities'] != None:
       for x in item['activities']:
-        print x
         if x == activity:
           return {"data": {
           "type": "person",
@@ -30,17 +19,18 @@ def add_activity(table, id, activity, response):
       item['activities'].add(activity)
       item.save()
       return {"data": {
-        "type": "person",
-        "id": id,
-        "added": [str(activity)]
-        }
+      "type": "person",
+      "id": id,
+      "added": [activity]
       }
+      }
+
     p = Item(table, data={'id': id, 'name': item['name'], 'activities': {activity}})
     p.save(overwrite=True)
     return {"data": {
     "type": "person",
     "id": id,
-    "added": [str(activity)]
+    "added": [activity]
     }
     }
 
