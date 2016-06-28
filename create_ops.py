@@ -12,7 +12,7 @@ def do_create(request, table, id, name, response):
                       "id_exists": {
                         "status": "400", # "Bad Request"
                       "title": "id already exists",
-                      "detail": {"name": item['name'], "activities": item['activities']}
+                      "detail": {"name": item["name"]}
                       }
                     }]
                 }
