@@ -5,7 +5,7 @@ from boto.dynamodb2.exceptions import ItemNotFound
 
 def add_activity(table, id, activity, response):
   try:
-    item = table.get_item(id=id)
+    item = table.get_item(id = id)
     response.status = 200
     if item["activities"] != None:
       for x in item["activities"]:
@@ -25,8 +25,8 @@ def add_activity(table, id, activity, response):
       }
       }
 
-    p = Item(table, data={'id': id, 'name': item['name'], 'activities': {activity}})
-    p.save(overwrite=True)
+    p = Item(table, data = {"id": id, "name": item["name"], "activities": {activity}})
+    p.save(overwrite = True)
     return {"data": {
     "type": "person",
     "id": id,
@@ -43,10 +43,9 @@ def add_activity(table, id, activity, response):
         }
         }]
         }
-
 def del_activity(table, id, activity, response):
   try:
-    item = table.get_item(id=id)
+    item = table.get_item(id = id)
     response.status = 200
     if item["activities"] != None:
       if activity in item["activities"]:
