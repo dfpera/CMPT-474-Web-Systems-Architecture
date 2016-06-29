@@ -39,14 +39,13 @@ def retrieve_by_id(table, id, response):
 			}
 #
 def retrieve_users(table, response):
-	print "Retrieve users"
-	#item = table.scan()
-	for i in table.scan():
-		obj = {
+	obj = []
+	for item in table.scan():
+		obj.append ({
 			"type": "users",
-			"name": i['name']
-		}
-	return {(json.dumps(obj,indent=4)) for i in obj}
+			"id": item["id"]
+		})
+	return {"data": obj}
 
 
 def retrieve_by_name(table, name, response):
