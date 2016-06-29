@@ -43,7 +43,7 @@ def retrieve_users(table, response):
 	for item in table.scan():
 		obj.append ({
 			"type": "users",
-			"id": item["id"]
+			"id": int(item["id"])
 		})
 	return {"data": obj}
 
