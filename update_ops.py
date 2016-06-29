@@ -11,37 +11,37 @@ def add_activity(table, id, activity, response):
       for x in item["activities"]:
         if x == activity:
           return {"data": {
-          "type": "person",
-          "id": id,
-          "added": []
-          }
+                  "type": "person",
+                  "id": id,
+                  "added": []
+              }
           }
       item["activities"].add(activity)
       item.save()
       return {"data": {
-      "type": "person",
-      "id": id,
-      "added": [activity]
-      }
+              "type": "person",
+              "id": id,
+              "added": [activity]
+          }
       }
 
     p = Item(table, data = {"id": id, "name": item["name"], "activities": {activity}})
     p.save(overwrite = True)
     return {"data": {
-    "type": "person",
-    "id": id,
-    "added": [activity]
-    }
+            "type": "person",
+            "id": id,
+            "added": [activity]
+        }
     }
 
   except ItemNotFound as inf:
-        response.status = 404
+        response.status = 404 # user not found
         return {
-        "errors": [{
-        "not_found": {
-        "id": id # "Replace with actual id"
-        }
-        }]
+            "errors": [{
+                "not_found": {
+                    "id": id # "Replace with actual id"
+                }
+            }]
         }
 def del_activity(table, id, activity, response):
   try:
@@ -52,23 +52,23 @@ def del_activity(table, id, activity, response):
         item["activities"].remove(activity)
         item.save()
         return {"data": {
-        "type": "person",
-        "id": id,
-        "deleted": [activity]
-        }
+                "type": "person",
+                "id": id,
+                "deleted": [activity]
+            }
         }
     return {"data": {
-        "type": "person",
-        "id": id,
-        "deleted": []
-        }
+                "type": "person",
+                "id": id,
+                "deleted": []
+            }
         }
 
   except ItemNotFound as inf:
-    response.status = 404
+    response.status = 404 # user not found
     return {"errors": [{
-    "not_found": {
-    "id": id
-    }
-    }]
+            "not_found": {
+                "id": id
+            }
+        }]
     }

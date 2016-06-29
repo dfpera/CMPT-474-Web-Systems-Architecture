@@ -16,7 +16,7 @@ def delete_by_id(table, id, response):
         }
 
     except ItemNotFound as inf:
-        response.status = 404 # "Delete"
+        response.status = 404 # user not found
         return {"errors": [{
                   "not_found": {
                     "id": id
@@ -35,7 +35,7 @@ def delete_by_name(table, name, response):
             "id": id
             }
         }
-    response.status = 404 # "Delete"
+    response.status = 404 # user not found
     return {"errors": [{
               "not_found": {
                 "name": name

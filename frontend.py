@@ -43,6 +43,7 @@ def create_route():
     # Pass the called routine the response object to construct a response from
     return create_ops.do_create(request, table, id, name, response)
 
+# retrieve_by_id
 @get('/users/<id>')
 def get_id_route(id):
     id = int(id) # In URI, id is a string and must be made int
@@ -50,18 +51,21 @@ def get_id_route(id):
 
     return retrieve_ops.retrieve_by_id(table, id, response)
 
+# retrieve_users
 @get('/users')
 def get_users_route():
     print "Retrieving all users\n"
 
     return retrieve_ops.retrieve_users(table, response)
 
+# retrieve_by_name
 @get('/names/<name>')
 def get_name_route(name):
     print "Retrieving name {0}\n".format(name)
     
     return retrieve_ops.retrieve_by_name(table, name, response)
 
+# delete_by_id
 @delete('/users/<id>')
 def delete_id_route(id):
     id = int(id)
@@ -70,11 +74,13 @@ def delete_id_route(id):
 
     return delete_ops.delete_by_id(table, id, response)
 
+# delete_by_name
 @delete('/names/<name>')
 def delete_name_route(name):
     print "Deleting name {0}\n".format(name)
     return delete_ops.delete_by_name(table, name, response)
 
+# add_activity
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
     id = int(id)
@@ -82,6 +88,7 @@ def add_activity_route(id, activity):
     
     return update_ops.add_activity(table, id, activity, response)
 
+# del_activity
 @delete('/users/<id>/activities/<activity>') # mark 1, 06/17/16
 def del_activity_route(id, activity):
     id = int(id)
