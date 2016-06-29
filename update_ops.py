@@ -7,11 +7,25 @@ def add_activity(table, id, activity, response):
   try:
     item = table.get_item(id=id)
     response.status = 200
-    json_activity = []
+    if item["activities"] != None:
+      for x in item["activities"]:
+        if x == activity:
+          return {"data": {
+          "type": "person",
+          "id": id,
+          "added": []
+          }
+          }
+      item["activities"].add(activity)
+      item.save()
+      return {"data": {
+      "type": "person",
+      "id": id,
+      "added": [activity]
+      }
+      }
+
     p = Item(table, data={'id': id, 'name': item['name'], 'activities': {activity}})
-    json_activity.append(activity)
-    print "type: "+ str(type(activity))
-    print "type: "+ str(type(json_activity))
     p.save(overwrite=True)
     return {"data": {
     "type": "person",
@@ -34,9 +48,9 @@ def del_activity(table, id, activity, response):
   try:
     item = table.get_item(id=id)
     response.status = 200
-    if item['activities'] != None:
-      if activity in item['activities']:
-        item['activities'].remove(activity)
+    if item["activities"] != None:
+      if activity in item["activities"]:
+        item["activities"].remove(activity)
         item.save()
         return {"data": {
         "type": "person",
