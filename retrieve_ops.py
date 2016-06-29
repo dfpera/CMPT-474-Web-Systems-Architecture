@@ -4,17 +4,9 @@ from boto.dynamodb2.items import Item
 from boto.dynamodb2.exceptions import ItemNotFound
  #!/usr/local/bin/python
 import json
-class SetEncoder(json.JSONEncoder):
-	def default(self, obj):
-		if isinstance(obj, set):
-			return list(obj)
-		if isinstance(obj, Something):
-			return 'CustomSomethingRepresentation'
-		return json.JSONEncoder.default(self, obj)
-
 def retrieve_by_id(table, id, response):
 	try:
-		item = table.get_item(id=id)
+		item = table.get_item(id = id)
 		response.status = 200 # item found
 		activities = item['activities']
 		json_activities = []
@@ -24,7 +16,7 @@ def retrieve_by_id(table, id, response):
 		return {"data": {
 					"type": "person",
 					"id": id,
-					"name": item['name'],
+					"name": item["name"],
 					"activities": json_activities
 				}
 			}
@@ -53,7 +45,7 @@ def retrieve_by_name(table, name, response):
         for item in items:
                 response.status = 200
                 id = int(item["id"])
-                activities = item['activities']
+                activities = item["activities"]
                 json_activities = []
                 if activities != None:
                 	for activity in activities:
