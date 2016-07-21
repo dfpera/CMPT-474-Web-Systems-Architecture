@@ -54,6 +54,7 @@ def create_route():
 
        These must be *distinct objects*. Their contents should be identical.
 '''
+
 def set_send_msg(send_msg_ob_p):
     global send_msg_ob
     send_msg_ob = send_msg_ob_p.setup(write_to_queues, set_dup_DS)
@@ -61,6 +62,8 @@ def set_send_msg(send_msg_ob_p):
     a = {'msg_id':id}#need more attributes
 
     a_jason_str = json.dumps(a)#convert to json format
+
+    #construct two copies of the request message, one for each queue
     msg_a = boto.sqs.message.Message()
     msg_a.set_body(a_jason_str)
     msg_b = boto.sqs.message.Message()
@@ -71,7 +74,15 @@ def set_send_msg(send_msg_ob_p):
     msg = boto.sqs.message.Message()#construct a single response message
     msg.set_body(a_jason_str)
 
+    #set up the input queues and output queue
+    conn = boto.sqs.connect_to_region(AWS_REGION)
+    a3_in_a = conn.create_queue(Q_IN_NAME_BASE)
+    a3_in_b = conn.create_queue(Q_IN_NAME_BASE)
+
+    q_out = {}
     q_out.write(msg)#store output reference in q_out
+
+
 
 '''
    EXTEND:
@@ -99,6 +110,7 @@ def write_to_queues(msg_a, msg_b):
 def is_first_response(id):
     # EXTEND:
     # Return True if this message is the first response to a request
+
     pass
 
 def is_second_response(id):
