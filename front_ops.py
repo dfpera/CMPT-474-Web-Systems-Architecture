@@ -58,6 +58,21 @@ def set_send_msg(send_msg_ob_p):
     global send_msg_ob
     send_msg_ob = send_msg_ob_p.setup(write_to_queues, set_dup_DS)
 
+    a = {'msg_id':id}#need more attributes
+
+    a_jason_str = json.dumps(a)#convert to json format
+    msg_a = boto.sqs.message.Message()
+    msg_a.set_body(a_jason_str)
+    msg_b = boto.sqs.message.Message()
+    msg_b.set_body(a_jason_str)
+
+    
+
+    msg = boto.sqs.message.Message()#construct a single response message
+    msg.set_body(a_jason_str)
+
+    q_out.write(msg)#store output reference in q_out
+
 '''
    EXTEND:
    Set up the input queues and output queue here
@@ -67,6 +82,10 @@ def set_send_msg(send_msg_ob_p):
 def write_to_queues(msg_a, msg_b):
     # EXTEND:
     # Send msg_a to a3_in_a and msg-b to a3_in_b
+    send_msg_ob.send_msg(msg_a, msg_b)
+
+
+
     pass
 
 '''
