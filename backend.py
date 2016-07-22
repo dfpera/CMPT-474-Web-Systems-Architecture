@@ -50,32 +50,3 @@ if __name__ == "__main__":
             * record the message id and response
             * put the response on the output queue
     '''
-
-# THIS IS FROM THE ASSIGNMENT 2 DELETE IF NOT NEEDED
-
-# #  You can use the following without modification
-# def main():
-#     global table
-#     try:
-#         conn = boto.dynamodb2.connect_to_region(AWS_REGION)
-#         if conn == None:
-#             sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
-#             sys.exit(1)
-
-#         table = boto.dynamodb2.table.Table(TABLE_NAME, connection=conn)
-#     except Exception as e:
-#         sys.stderr.write("Exception connecting to DynamoDB table {0}\n".format(TABLE_NAME))
-#         sys.stderr.write(str(e))
-#         sys.exit(1)
-
-#     if len(sys.argv) >= 2:
-#         port = int(sys.argv[1])
-#     else:
-#         port = DEFAULT_PORT
-
-#     app = default_app()
-#     run(app, host="localhost", port=port)
-
-# if __name__ == "__main__":
-#     main()
-    
