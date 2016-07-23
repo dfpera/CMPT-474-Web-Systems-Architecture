@@ -16,7 +16,8 @@ import boto.dynamodb2.table
 import boto.sqs
 # Local import
 import create_ops
-
+from bottle import response
+import urlparse
 AWS_REGION = "us-west-2"
 TABLE_NAME_BASE = "activities"
 Q_IN_NAME_BASE = "a3_back_in"
@@ -41,15 +42,16 @@ def connectQueue(name):
             sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
             sys.exit(1)
         print "yes"
-        q_in = conn.get_queue(Q_IN_NAME_BASE)
+        q_in = conn.get_queue(Q_IN_NAME_BASE + name)
         print "q_in successfull"
         q_out = conn.get_queue(Q_OUT_NAME)
         print "q_out successfull"
         return (q_in, q_out)
   except Exception as e:
-        sys.stderr.write("Exception connecting to queue {0}\n".format(Q_IN_NAME_BASE))
+        sys.stderr.write("Exception connecting to queue {0}\n".format(Q_IN_NAME_BASE + name))
         sys.stderr.write(str(e))
         sys.exit(1)
+
 def connectTable(name):
   try:
         conn = boto.dynamodb2.connect_to_region(AWS_REGION)
@@ -57,11 +59,11 @@ def connectTable(name):
         if conn == None:
             sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
             sys.exit(1)
-        table = boto.dynamodb2.table.Table(TABLE_NAME_BASE, connection=conn)
+        table = boto.dynamodb2.table.Table(TABLE_NAME_BASE + name, connection=conn)
         print "table successfull"
         return table
   except Exception as e:
-        sys.stderr.write("Exception connecting to DynamoDB table {0}\n".format(TABLE_NAME_BASE))
+        sys.stderr.write("Exception connecting to DynamoDB table {0}\n".format(TABLE_NAME_BASE + name))
         sys.stderr.write(str(e))
         sys.exit(1)
 
@@ -72,16 +74,18 @@ if __name__ == "__main__":
     wait_start = time.time()
     while True:
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
-      print "msg_in",msg_in.get_body()
+      print "msg_in", msg_in.get_body()
       if msg_in:
-          body = json.loads(msg_in.get_body())
-          msg_id = body['msg_id']
+          body = json.loads(str(msg_in.get_body()))
+          #msg_id = body['msg_id']
           msg_op = body['op']
           msg_response = None
           if msg_op == "create_user":
+            print "create"
+            msg_id = body['id']
             msg_name = body['name']
-            msg_request = body['request']
-            msg_response = create_ops.create_ops.do_create(request, table, id, name, response)
+            msg_response = create_ops.do_create(table, msg_id, msg_name, response)
+            print msg_response
 
 
           msg = boto.sqs.message.Message()
