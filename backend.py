@@ -16,6 +16,7 @@ import boto.dynamodb2.table
 import boto.sqs
 # Local import
 import create_ops
+import delete_ops
 from bottle import response
 import urlparse
 AWS_REGION = "us-west-2"
@@ -74,20 +75,35 @@ if __name__ == "__main__":
     wait_start = time.time()
     while True:
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
-      print "msg_in", msg_in.get_body()
       if msg_in:
-          body = json.loads(str(msg_in.get_body()))
+          body = json.loads(msg_in.get_body())
           #msg_id = body['msg_id']
           msg_op = body['op']
           msg_response = None
           if msg_op == "create_user":
             print "create"
-            msg_id = body['id']
+            msg_user_id = body['id']
             msg_name = body['name']
-            msg_response = create_ops.do_create(table, msg_id, msg_name, response)
-            print msg_response
-
-
+            msg_response = create_ops.do_create(table, msg_user_id, msg_name, response)
+          elif msg_op == "delete_by_id":
+            print "delete by id"
+            msg_user_id = body['id']
+            msg_response = delete_ops.delete_by_id(table, msg_user_id, response)
+          elif msg_op == "delete_by_name":
+            print "delete by name"
+            msg_name = body['name']
+            msg_response = delete_ops.delete_by_name(table, msg_name, response)
+          elif msg_op == "retrieve_by_id":
+            print "retrieve by id"
+            msg_user_id = body['id']
+            msg_response = retrieve_ops.retrieve_by_id(table, msg_user_id, response)
+          elif msg_op == "retrieve_by_name":
+            print "retrieve by name"
+            msg_name = body['name']
+            msg_response = retrieve_ops.retrieve_by_name(table, msg_name, response)
+          elif msg_op == "retrieve":
+            print "retrieve"
+            msg_response = retrieve_ops.retrieve_users(table, response)
           msg = boto.sqs.message.Message()
           msg_response_json = json.dumps(msg_response)
           msg.set_body(msg_response_json)
@@ -95,6 +111,7 @@ if __name__ == "__main__":
           wait_start = time.time()
       elif time.time() - wait_start > MAX_TIME_S:
           print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
+          break
       else:
           pass
 
@@ -113,5 +130,5 @@ if __name__ == "__main__":
           - if this is the first time for this request
             * do the requested database operation
             * record the message id and response
-            * put the response on the output queue
+            * put the message id and response on the output queue
     '''
