@@ -26,6 +26,15 @@ def health_check():
     response.status = 200
     return "Healthy"
 
+def msgConstruction(message_dict):
+  message_json=json.dumps(message_dict)
+  msg_a = boto.sqs.message.Message()
+  msg_a.set_body(message_json)
+  msg_b = boto.sqs.message.Message()
+  msg_b.set_body(message_json)
+  result = send_msg_ob.send_msg(msg_a, msg_b)
+  return result
+
 '''
 # EXTEND:
 # Define all the other REST operations here ...
@@ -33,6 +42,21 @@ def health_check():
 def create_route():
     pass
 '''
+@post('/users')
+def create_route():
+    ct = request.get_header('content-type')
+    if ct != 'application/json':
+        return abort(response, 400, [
+            "request content-type unacceptable:  body must be "
+            "'application/json' (was '{0}')".format(ct)])
+    id = request.json["id"] # In JSON, id is already an integer
+    name = request.json["name"]
+    message_dict = {'op': 'create_user', 'id': id, 'name': name, 'request': request }
+    result = msgConstruction(message_dict)
+    print "creating id {0}, name {1}\n".format(id, name)
+
+    # Pass the called routine the response object to construct a response from
+    #return create_ops.do_create(request, table, id, name, response)
 
 '''
    Boilerplate: Do not modify the following function. It
