@@ -58,6 +58,13 @@ def create_route():
     # Pass the called routine the response object to construct a response from
     #return create_ops.do_create(request, table, id, name, response)
 
+@put('/users/<id>/activities/<activity>')
+def add_activity_route(id, activity):
+    id = int(id)
+    print "adding activity for id {0}, activity {1}\n".format(id, activity)
+    
+    #return update_ops.add_activity(table, id, activity, response)
+
 '''
    Boilerplate: Do not modify the following function. It
    is called by frontend.py to inject the names of the two
