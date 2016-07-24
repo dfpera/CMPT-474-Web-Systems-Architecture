@@ -55,15 +55,33 @@ def msgConstruction(message_dict):
 '''
 # EXTEND:
 # Define all the other REST operations here ...
+'''
 @post('/users')
 def create_route():
-    pass
-'''
+    ct = request.get_header('content-type')
+    if ct != 'application/json':
+        return abort(response, 400, [
+            "request content-type unacceptable:  body must be "
+            "'application/json' (was '{0}')".format(ct)])
+    id = request.json["id"] # In JSON, id is already an integer
+    name = request.json["name"]
+    print "creating id {0}, name {1}\n".format(id, name)
+    message_dict = {'op': 'create_user', 'id': id, 'name': name}
+    msgConstruction(message_dict)
+
+
 @delete('/users/<id>')
 def delete_id_route(id):
     id = int(id)
     print "delete", id
     message_dict = {'op': 'delete_by_id', 'id': id }
+    msgConstruction(message_dict)
+
+# delete_by_name
+@delete('/names/<name>')
+def delete_name_route(name):
+    print "Deleting name {0}\n".format(name)
+    message_dict = {'op': 'delete_by_name', 'name': name}
     msgConstruction(message_dict)
 '''
    Boilerplate: Do not modify the following function. It
