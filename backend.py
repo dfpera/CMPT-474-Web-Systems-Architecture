@@ -118,7 +118,7 @@ if __name__ == "__main__":
             msg_activity = body['activity']
             msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
 
-          print msg_response
+          q_in.delete_message(msg_in)
           msg = boto.sqs.message.Message()
           msg_response_json = json.dumps(msg_response)
           msg.set_body(msg_response_json)

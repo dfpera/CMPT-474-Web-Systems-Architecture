@@ -77,12 +77,26 @@ def delete_id_route(id):
     message_dict = {'op': 'delete_by_id', 'id': id }
     msgConstruction(message_dict)
 
-# delete_by_name
 @delete('/names/<name>')
 def delete_name_route(name):
     print "Deleting name {0}\n".format(name)
     message_dict = {'op': 'delete_by_name', 'name': name}
     msgConstruction(message_dict)
+
+@put('/users/<id>/activities/<activity>')
+def add_activity_route(id, activity):
+    id = int(id)
+    print "adding activity for id {0}, activity {1}\n".format(id, activity)
+    message_dict = {'op': 'add_activity', 'id': id, 'activity': activity}
+    msgConstruction(message_dict)
+
+@delete('/users/<id>/activities/<activity>')
+def del_activity_route(id, activity):
+    id = int(id)
+    print "deleting activity for id {0}, activity {1}\n".format(id, activity)
+    message_dict = {'op': 'del_activity', 'id': id, 'activity': activity}
+    msgConstruction(message_dict)
+
 '''
    Boilerplate: Do not modify the following function. It
    is called by frontend.py to inject the names of the two
