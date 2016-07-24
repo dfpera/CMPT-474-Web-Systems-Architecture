@@ -79,14 +79,16 @@ if __name__ == "__main__":
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
       if msg_in:
           body = json.loads(msg_in.get_body())
-          #msg_id = body['msg_id']
+          msg_id = body['msg_id']
           msg_op = body['op']
           msg_response = None
           if msg_op == "create_user":
             print "create"
             msg_user_id = body['id']
             msg_name = body['name']
-            msg_response = create_ops.do_create(table, msg_user_id, msg_name, response)
+            msg_scheme = body['scheme']
+            msg_netloc = body['netloc'] 
+            msg_response = create_ops.do_create(msg_scheme, msg_netloc,table, msg_user_id, msg_name, response)
           elif msg_op == "delete_by_id":
             print "delete by id"
             msg_user_id = body['id']
@@ -120,6 +122,7 @@ if __name__ == "__main__":
 
           q_in.delete_message(msg_in)
           msg = boto.sqs.message.Message()
+          msg_response['msg_id'] = msg_id
           msg_response_json = json.dumps(msg_response)
           msg.set_body(msg_response_json)
           q_out.write(msg)

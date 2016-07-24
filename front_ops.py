@@ -48,8 +48,7 @@ def msgConstruction(message_dict):
   msg_a.set_body(message_json)
   msg_b = boto.sqs.message.Message()
   msg_b.set_body(message_json)
-  write_to_queues(msg_a,msg_b)
-  #send_msg_ob.send_msg(msg_a, msg_b)
+  send_msg_ob.send_msg(msg_a, msg_b)
   #return result
 
 '''
@@ -66,7 +65,8 @@ def create_route():
     id = request.json["id"] # In JSON, id is already an integer
     name = request.json["name"]
     print "creating id {0}, name {1}\n".format(id, name)
-    message_dict = {'op': 'create_user', 'id': id, 'name': name}
+    print "request", request.urlparts.scheme
+    message_dict = {'op': 'create_user', 'id': id, 'name': name, 'scheme': request.urlparts.scheme, 'netloc':request.urlparts.netloc}
     msgConstruction(message_dict)
 
 @get('/users/<id>')
@@ -153,8 +153,8 @@ def write_to_queues(msg_a, msg_b):
         sys.exit(1)
     # create_queue is idempotent---if queue exists, it simply connects to it
     # will change to a3_in_a / a3_in_b
-    qin_a = conn.create_queue("a3_back_in_a")
-    qin_b = conn.create_queue("a3_back_in_b")
+    qin_a = conn.create_queue("a3_in_a")
+    qin_b = conn.create_queue("a3_in_b")
     qin_a.write(msg_a)
     qin_b.write(msg_b)
   except Exception as e:

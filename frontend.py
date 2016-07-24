@@ -86,7 +86,7 @@ def get_responses(q_out):
                     print "Ignoring duplicate msg id {0}".format(id)
                     clear_duplicate_response(id)
 
-            q_out.delete_message(msg_out)
+            #q_out.delete_message(msg_out)
             wait_start = time.time()
         elif time.time() - wait_start > MAX_TIME_S:
              print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
