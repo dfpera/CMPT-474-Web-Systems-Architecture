@@ -19,12 +19,38 @@ AWS_REGION = "us-west-2"
 
 Q_IN_NAME_BASE = 'a3_in'
 Q_OUT_NAME = 'a3_out'
+q_out = None
+
+
+try:
+    conn = boto.sqs.connect_to_region(AWS_REGION)
+    if conn == None:
+        sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
+        sys.exit(1)
+    # create_queue is idempotent---if queue exists, it simply connects to it
+    q_out = conn.create_queue(Q_OUT_NAME)
+
+    print "q_out successful"
+except Exception as e:
+    sys.stderr.write("Exception connecting to SQS\n")
+    sys.stderr.write(str(e))
+    sys.exit(1)
 
 # Respond to health check
 @get('/')
 def health_check():
     response.status = 200
     return "Healthy"
+
+def msgConstruction(message_dict):
+  message_json=json.dumps(message_dict)
+  msg_a = boto.sqs.message.Message()
+  msg_a.set_body(message_json)
+  msg_b = boto.sqs.message.Message()
+  msg_b.set_body(message_json)
+  write_to_queues(msg_a,msg_b)
+  #send_msg_ob.send_msg(msg_a, msg_b)
+  #return result
 
 '''
 # EXTEND:
@@ -33,7 +59,12 @@ def health_check():
 def create_route():
     pass
 '''
-
+@delete('/users/<id>')
+def delete_id_route(id):
+    id = int(id)
+    print "delete", id
+    message_dict = {'op': 'delete_by_id', 'id': id }
+    msgConstruction(message_dict)
 '''
    Boilerplate: Do not modify the following function. It
    is called by frontend.py to inject the names of the two
@@ -65,9 +96,21 @@ def set_send_msg(send_msg_ob_p):
 '''
 
 def write_to_queues(msg_a, msg_b):
-    # EXTEND:
-    # Send msg_a to a3_in_a and msg-b to a3_in_b
-    pass
+  try:
+    conn = boto.sqs.connect_to_region(AWS_REGION)
+    if conn == None:
+        sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
+        sys.exit(1)
+    # create_queue is idempotent---if queue exists, it simply connects to it
+    # will change to a3_in_a / a3_in_b
+    qin_a = conn.create_queue("a3_back_in_a")
+    qin_b = conn.create_queue("a3_back_in_b")
+    qin_a.write(msg_a)
+    qin_b.write(msg_b)
+  except Exception as e:
+    sys.stderr.write("Exception connecting to SQS\n")
+    sys.stderr.write(str(e))
+    sys.exit(1)
 
 '''
    EXTEND:

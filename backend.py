@@ -14,7 +14,13 @@ import time
 import boto.dynamodb2
 import boto.dynamodb2.table
 import boto.sqs
-
+# Local import
+import create_ops
+import delete_ops
+import update_ops
+import retrieve_ops
+from bottle import response
+import urlparse
 AWS_REGION = "us-west-2"
 TABLE_NAME_BASE = "activities"
 Q_IN_NAME_BASE = "a3_back_in"
@@ -31,8 +37,99 @@ def handle_args():
     argp.add_argument('suffix', help="Suffix for queue base ({0}) and table base ({1})".format(Q_IN_NAME_BASE, TABLE_NAME_BASE))
     return argp.parse_args()
 
+def connectQueue(name):
+  try:
+        conn = boto.sqs.connect_to_region(AWS_REGION)
+        print "sqs successful"
+        if conn == None:
+            sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
+            sys.exit(1)
+        print "yes"
+        q_in = conn.create_queue(Q_IN_NAME_BASE + name)
+        print "q_in successfull"
+        q_out = conn.create_queue(Q_OUT_NAME)
+        print "q_out successfull"
+        return (q_in, q_out)
+  except Exception as e:
+        sys.stderr.write("Exception connecting to queue {0}\n".format(Q_IN_NAME_BASE + name))
+        sys.stderr.write(str(e))
+        sys.exit(1)
+
+def connectTable(name):
+  try:
+        conn = boto.dynamodb2.connect_to_region(AWS_REGION)
+        print "tabel"
+        if conn == None:
+            sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
+            sys.exit(1)
+        table = boto.dynamodb2.table.Table(TABLE_NAME_BASE + name, connection=conn)
+        print "table successfull"
+        return table
+  except Exception as e:
+        sys.stderr.write("Exception connecting to DynamoDB table {0}\n".format(TABLE_NAME_BASE + name))
+        sys.stderr.write(str(e))
+        sys.exit(1)
+
 if __name__ == "__main__":
     args = handle_args()
+    q_in, q_out= connectQueue(args.suffix)
+    table = connectTable(args.suffix)
+    wait_start = time.time()
+    while True:
+      msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
+      if msg_in:
+          body = json.loads(msg_in.get_body())
+          #msg_id = body['msg_id']
+          msg_op = body['op']
+          msg_response = None
+          if msg_op == "create_user":
+            print "create"
+            msg_user_id = body['id']
+            msg_name = body['name']
+            msg_response = create_ops.do_create(table, msg_user_id, msg_name, response)
+          elif msg_op == "delete_by_id":
+            print "delete by id"
+            msg_user_id = body['id']
+            msg_response = delete_ops.delete_by_id(table, msg_user_id, response)
+          elif msg_op == "delete_by_name":
+            print "delete by name"
+            msg_name = body['name']
+            msg_response = delete_ops.delete_by_name(table, msg_name, response)
+          elif msg_op == "retrieve_by_id":
+            print "retrieve by id"
+            msg_user_id = body['id']
+            msg_response = retrieve_ops.retrieve_by_id(table, msg_user_id, response)
+          elif msg_op == "retrieve_by_name":
+            print "retrieve by name"
+            msg_name = body['name']
+            msg_response = retrieve_ops.retrieve_by_name(table, msg_name, response)
+          elif msg_op == "retrieve":
+            print "retrieve"
+            msg_response = retrieve_ops.retrieve_users(table, response)
+          elif msg_op == "add_activity":
+            print "add activity"
+            msg_user_id = body['id']
+            msg_activity = body['activity']
+            msg_response = update_ops.add_activity(table, msg_user_id, msg_activity, response)
+
+          elif msg_op == "del_activity":
+            print "delete activity"
+            msg_user_id = body['id']
+            msg_activity = body['activity']
+            msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
+
+          print msg_response
+          msg = boto.sqs.message.Message()
+          msg_response_json = json.dumps(msg_response)
+          msg.set_body(msg_response_json)
+          q_out.write(msg)
+          wait_start = time.time()
+      elif time.time() - wait_start > MAX_TIME_S:
+          print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
+          break
+      else:
+          pass
+
     '''
        EXTEND:
        
@@ -48,5 +145,5 @@ if __name__ == "__main__":
           - if this is the first time for this request
             * do the requested database operation
             * record the message id and response
-            * put the response on the output queue
+            * put the message id and response on the output queue
     '''
