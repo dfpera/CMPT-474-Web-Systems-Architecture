@@ -19,6 +19,22 @@ AWS_REGION = "us-west-2"
 
 Q_IN_NAME_BASE = 'a3_in'
 Q_OUT_NAME = 'a3_out'
+q_out = None
+
+
+try:
+    conn = boto.sqs.connect_to_region(AWS_REGION)
+    if conn == None:
+        sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
+        sys.exit(1)
+    # create_queue is idempotent---if queue exists, it simply connects to it
+    q_out = conn.create_queue(Q_OUT_NAME)
+
+    print "q_out successful"
+except Exception as e:
+    sys.stderr.write("Exception connecting to SQS\n")
+    sys.stderr.write(str(e))
+    sys.exit(1)
 
 # Respond to health check
 @get('/')
@@ -32,8 +48,9 @@ def msgConstruction(message_dict):
   msg_a.set_body(message_json)
   msg_b = boto.sqs.message.Message()
   msg_b.set_body(message_json)
-  result = send_msg_ob.send_msg(msg_a, msg_b)
-  return result
+  write_to_queues(msg_a,msg_b)
+  #send_msg_ob.send_msg(msg_a, msg_b)
+  #return result
 
 '''
 # EXTEND:
@@ -42,29 +59,12 @@ def msgConstruction(message_dict):
 def create_route():
     pass
 '''
-@post('/users')
-def create_route():
-    ct = request.get_header('content-type')
-    if ct != 'application/json':
-        return abort(response, 400, [
-            "request content-type unacceptable:  body must be "
-            "'application/json' (was '{0}')".format(ct)])
-    id = request.json["id"] # In JSON, id is already an integer
-    name = request.json["name"]
-    message_dict = {'op': 'create_user', 'id': id, 'name': name, 'request': request }
-    result = msgConstruction(message_dict)
-    print "creating id {0}, name {1}\n".format(id, name)
-
-    # Pass the called routine the response object to construct a response from
-    #return create_ops.do_create(request, table, id, name, response)
-
-@put('/users/<id>/activities/<activity>')
-def add_activity_route(id, activity):
+@delete('/users/<id>')
+def delete_id_route(id):
     id = int(id)
-    print "adding activity for id {0}, activity {1}\n".format(id, activity)
-    
-    #return update_ops.add_activity(table, id, activity, response)
-
+    print "delete", id
+    message_dict = {'op': 'delete_by_id', 'id': id }
+    msgConstruction(message_dict)
 '''
    Boilerplate: Do not modify the following function. It
    is called by frontend.py to inject the names of the two
@@ -96,9 +96,21 @@ def set_send_msg(send_msg_ob_p):
 '''
 
 def write_to_queues(msg_a, msg_b):
-    # EXTEND:
-    # Send msg_a to a3_in_a and msg-b to a3_in_b
-    pass
+  try:
+    conn = boto.sqs.connect_to_region(AWS_REGION)
+    if conn == None:
+        sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
+        sys.exit(1)
+    # create_queue is idempotent---if queue exists, it simply connects to it
+    # will change to a3_in_a / a3_in_b
+    qin_a = conn.create_queue("a3_back_in_a")
+    qin_b = conn.create_queue("a3_back_in_b")
+    qin_a.write(msg_a)
+    qin_b.write(msg_b)
+  except Exception as e:
+    sys.stderr.write("Exception connecting to SQS\n")
+    sys.stderr.write(str(e))
+    sys.exit(1)
 
 '''
    EXTEND:

@@ -45,9 +45,9 @@ def connectQueue(name):
             sys.stderr.write("Could not connect to AWS region '{0}'\n".format(AWS_REGION))
             sys.exit(1)
         print "yes"
-        q_in = conn.get_queue(Q_IN_NAME_BASE + name)
+        q_in = conn.create_queue(Q_IN_NAME_BASE + name)
         print "q_in successfull"
-        q_out = conn.get_queue(Q_OUT_NAME)
+        q_out = conn.create_queue(Q_OUT_NAME)
         print "q_out successfull"
         return (q_in, q_out)
   except Exception as e:
@@ -77,7 +77,6 @@ if __name__ == "__main__":
     wait_start = time.time()
     while True:
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
-      print "msg_user_in", msg_in.get_body()
       if msg_in:
           body = json.loads(msg_in.get_body())
           #msg_id = body['msg_id']
@@ -107,13 +106,13 @@ if __name__ == "__main__":
           elif msg_op == "retrieve":
             print "retrieve"
             msg_response = retrieve_ops.retrieve_users(table, response)
-          elif msg_op == "add_activity"
+          elif msg_op == "add_activity":
             print "add activity"
             msg_user_id = body['id']
             msg_activity = body['activity']
             msg_response = update_ops.add_activity(table, msg_user_id, msg_activity, response)
 
-          elif msg_op == "del_activity"
+          elif msg_op == "del_activity":
             print "delete activity"
             msg_user_id = body['id']
             msg_activity = body['activity']
