@@ -42,10 +42,17 @@ def health_check():
     response.status = 200
     return "Healthy"
 
+'''
+Construct message msg_a and msg_b to be sent to queue a3_in_a and a3_in_b
+PARAM: Python dictionary of operation to be perfomed
+RETURN: Python object response from backend.py 
+'''
 def msgConstruction(message_dict):
   message_json=json.dumps(message_dict)
+  # msg_a
   msg_a = boto.sqs.message.Message()
   msg_a.set_body(message_json)
+  # msg_b
   msg_b = boto.sqs.message.Message()
   msg_b.set_body(message_json)
   write_to_queues(msg_a,msg_b)
@@ -55,6 +62,11 @@ def msgConstruction(message_dict):
 '''
 # EXTEND:
 # Define all the other REST operations here ...
+'''
+
+'''
+Invokes message to create user in the backend db
+RETURN: N/A
 '''
 @post('/users')
 def create_route():
@@ -69,6 +81,10 @@ def create_route():
     message_dict = {'op': 'create_user', 'id': id, 'name': name}
     msgConstruction(message_dict)
 
+'''
+Invokes message to retrieve user by id from backend db
+RETURN: N/A
+'''
 @get('/users/<id>')
 def get_id_route(id):
     id = int(id)
@@ -76,18 +92,30 @@ def get_id_route(id):
     message_dict = {'op': 'retrieve_by_id', 'id': id}
     msgConstruction(message_dict)
 
+'''
+Invokes message to retrieve all users from backend db
+RETURN: N/A
+'''
 @get('/users')
 def get_users_route():
     print "Retrieve all users"
     message_dict = {'op': 'retrieve'}
     msgConstruction(message_dict)
 
+'''
+Invokes message to retrieve user by name from backend db
+RETURN: N/A
+'''
 @get('/names/<name>')
 def get_name_route(name):
     print "Retrieve by name: " + name
     message_dict = {'op': 'retrieve_by_name', 'name': name}
     msgConstruction(message_dict)
 
+'''
+Invokes message to delete user by id from backend db
+RETURN: N/A
+'''
 @delete('/users/<id>')
 def delete_id_route(id):
     id = int(id)
@@ -95,12 +123,20 @@ def delete_id_route(id):
     message_dict = {'op': 'delete_by_id', 'id': id }
     msgConstruction(message_dict)
 
+'''
+Invokes message to delete user by name from backend db
+RETURN: N/A
+'''
 @delete('/names/<name>')
 def delete_name_route(name):
     print "Deleting name {0}\n".format(name)
     message_dict = {'op': 'delete_by_name', 'name': name}
     msgConstruction(message_dict)
 
+'''
+Invokes message to add activity to user in backend db
+RETURN: N/A
+'''
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
     id = int(id)
@@ -108,6 +144,10 @@ def add_activity_route(id, activity):
     message_dict = {'op': 'add_activity', 'id': id, 'activity': activity}
     msgConstruction(message_dict)
 
+'''
+Invokes message to delete activity from user in backend db
+RETURN: N/A
+'''
 @delete('/users/<id>/activities/<activity>')
 def del_activity_route(id, activity):
     id = int(id)
