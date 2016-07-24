@@ -69,6 +69,24 @@ def create_route():
     message_dict = {'op': 'create_user', 'id': id, 'name': name}
     msgConstruction(message_dict)
 
+@get('/users/<id>')
+def get_id_route(id):
+    id = int(id)
+    print "Retrieve by id: " + str(id)
+    message_dict = {'op': 'retrieve_by_id', 'id': id}
+    msgConstruction(message_dict)
+
+@get('/users')
+def get_users_route():
+    print "Retrieve all users"
+    message_dict = {'op': 'retrieve'}
+    msgConstruction(message_dict)
+
+@get('/names/<name>')
+def get_name_route(name):
+    print "Retrieve by name: " + name
+    message_dict = {'op': 'retrieve_by_name', 'name': name}
+    msgConstruction(message_dict)
 
 @delete('/users/<id>')
 def delete_id_route(id):
