@@ -77,7 +77,7 @@ def create_route():
             "'application/json' (was '{0}')".format(ct)])
     id = request.json["id"] # In JSON, id is already an integer
     name = request.json["name"]
-    print "creating id {0}, name {1}\n".format(id, name)
+    print "Creating id {0}, name {1}\n".format(id, name)
     message_dict = {'op': 'create_user', 'id': id, 'name': name}
     msgConstruction(message_dict)
 
@@ -88,7 +88,7 @@ RETURN: N/A
 @get('/users/<id>')
 def get_id_route(id):
     id = int(id)
-    print "Retrieve by id: " + str(id)
+    print "Retrieve by id: ".format(id)
     message_dict = {'op': 'retrieve_by_id', 'id': id}
     msgConstruction(message_dict)
 
@@ -98,7 +98,7 @@ RETURN: N/A
 '''
 @get('/users')
 def get_users_route():
-    print "Retrieve all users"
+    print "Retrieve all users."
     message_dict = {'op': 'retrieve'}
     msgConstruction(message_dict)
 
@@ -108,7 +108,7 @@ RETURN: N/A
 '''
 @get('/names/<name>')
 def get_name_route(name):
-    print "Retrieve by name: " + name
+    print "Retrieve by name: ".format(name)
     message_dict = {'op': 'retrieve_by_name', 'name': name}
     msgConstruction(message_dict)
 
@@ -119,7 +119,7 @@ RETURN: N/A
 @delete('/users/<id>')
 def delete_id_route(id):
     id = int(id)
-    print "delete", id
+    print "Delete user by id: ".format(id)
     message_dict = {'op': 'delete_by_id', 'id': id }
     msgConstruction(message_dict)
 
@@ -129,7 +129,7 @@ RETURN: N/A
 '''
 @delete('/names/<name>')
 def delete_name_route(name):
-    print "Deleting name {0}\n".format(name)
+    print "Deleting user by name {0}\n".format(name)
     message_dict = {'op': 'delete_by_name', 'name': name}
     msgConstruction(message_dict)
 
@@ -140,7 +140,7 @@ RETURN: N/A
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
     id = int(id)
-    print "adding activity for id {0}, activity {1}\n".format(id, activity)
+    print "Adding activity to id {0}, activity {1}\n".format(id, activity)
     message_dict = {'op': 'add_activity', 'id': id, 'activity': activity}
     msgConstruction(message_dict)
 
@@ -151,7 +151,7 @@ RETURN: N/A
 @delete('/users/<id>/activities/<activity>')
 def del_activity_route(id, activity):
     id = int(id)
-    print "deleting activity for id {0}, activity {1}\n".format(id, activity)
+    print "Deleting activity from id {0}, activity {1}\n".format(id, activity)
     message_dict = {'op': 'del_activity', 'id': id, 'activity': activity}
     msgConstruction(message_dict)
 
