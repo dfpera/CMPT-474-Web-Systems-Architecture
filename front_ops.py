@@ -30,8 +30,6 @@ try:
         sys.exit(1)
     # create_queue is idempotent---if queue exists, it simply connects to it
     q_out = conn.create_queue(Q_OUT_NAME)
-
-    print "q_out successful"
 except Exception as e:
     sys.stderr.write("Exception connecting to SQS\n")
     sys.stderr.write(str(e))
@@ -57,7 +55,7 @@ def msgConstruction(message_dict):
   msg_b = boto.sqs.message.Message()
   msg_b.set_body(message_json)
   result = send_msg_ob.send_msg(msg_a, msg_b)
-  print result['result'] 
+  #print result['result'] 
   return make_response(result, response)
 
 def make_response(result, response):
@@ -84,7 +82,7 @@ def create_route():
     name = request.json["name"]
     print "creating id {0}, name {1}\n".format(id, name)
     message_dict = {'op': 'create_user', 'id': id, 'name': name, 'scheme': request.urlparts.scheme, 'netloc':request.urlparts.netloc}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to retrieve user by id from backend db
@@ -95,7 +93,7 @@ def get_id_route(id):
     id = int(id)
     print "Retrieve by id: ".format(id)
     message_dict = {'op': 'retrieve_by_id', 'id': id}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to retrieve all users from backend db
@@ -105,7 +103,7 @@ RETURN: N/A
 def get_users_route():
     print "Retrieve all users."
     message_dict = {'op': 'retrieve'}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to retrieve user by name from backend db
@@ -115,7 +113,7 @@ RETURN: N/A
 def get_name_route(name):
     print "Retrieve by name: ".format(name)
     message_dict = {'op': 'retrieve_by_name', 'name': name}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to delete user by id from backend db
@@ -126,7 +124,7 @@ def delete_id_route(id):
     id = int(id)
     print "Delete user by id: ".format(id)
     message_dict = {'op': 'delete_by_id', 'id': id }
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to delete user by name from backend db
@@ -136,7 +134,7 @@ RETURN: N/A
 def delete_name_route(name):
     print "Deleting user by name {0}\n".format(name)
     message_dict = {'op': 'delete_by_name', 'name': name}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to add activity to user in backend db
@@ -147,7 +145,7 @@ def add_activity_route(id, activity):
     id = int(id)
     print "Adding activity to id {0}, activity {1}\n".format(id, activity)
     message_dict = {'op': 'add_activity', 'id': id, 'activity': activity}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
 Invokes message to delete activity from user in backend db
@@ -158,7 +156,7 @@ def del_activity_route(id, activity):
     id = int(id)
     print "Deleting activity from id {0}, activity {1}\n".format(id, activity)
     message_dict = {'op': 'del_activity', 'id': id, 'activity': activity}
-    msgConstruction(message_dict)
+    return msgConstruction(message_dict)
 
 '''
    Boilerplate: Do not modify the following function. It
@@ -218,7 +216,6 @@ history = []
 def is_first_response(id):
     # EXTEND:
     # Return True if this message is the first response to a request
-    print "check is first response ", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
           if not i.getFirstResponse(): 
@@ -230,7 +227,6 @@ def is_first_response(id):
 def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
-    print "check is second response ", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
           if not i.getSecondResponse(): 
@@ -240,7 +236,6 @@ def is_second_response(id):
 def get_response_action(id):
     # EXTEND:
     # Return the action for this message
-    print "get_response_action ", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
         return i.getAction()
@@ -248,7 +243,6 @@ def get_response_action(id):
 def get_partner_response(id):
     # EXTEND:
     # Return the id of the partner for this message, if any
-    print "get_partner_response", id
     for i in history:
       if i.getIDa() == id:
         return i.getIDb()
@@ -258,7 +252,6 @@ def get_partner_response(id):
 def mark_first_response(id):
     # EXTEND:
     # Update the data structures to note that the first response has been received
-    print "mark_first_response", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
         i.setFirstResponse()
@@ -267,7 +260,6 @@ def mark_first_response(id):
 def mark_second_response(id):
     # EXTEND:
     # Update the data structures to note that the second response has been received
-    print "mark_second_response", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
         i.setSecondResponse()
@@ -276,12 +268,13 @@ def mark_second_response(id):
 def clear_duplicate_response(id):
     # EXTEND:
     # Do anything necessary (if at all) when a duplicate response has been received
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        history.remove(i)
 
 
 class History():
   def __init__(self, id_a, id_b, action):
-    print "New history ", id_a, id_b
     self.id_a = id_a
     self.id_b = id_b
     self.action = action
@@ -301,15 +294,8 @@ class History():
     self.second_response = True
   def getAction(self):
     return self.action
-
-
-
-
-
-
+    
 def set_dup_DS(action, sent_a, sent_b):
   messageAID = sent_a.id
   messageBID = sent_b.id
-  print "Aid: ", messageAID
-  print "Bid: ", messageBID
   history.append(History(messageAID, messageBID, action))
