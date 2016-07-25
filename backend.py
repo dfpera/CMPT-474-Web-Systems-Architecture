@@ -19,7 +19,6 @@ import create_ops
 import delete_ops
 import update_ops
 import retrieve_ops
-import ID_Backend
 from bottle import response
 import urlparse
 AWS_REGION = "us-west-2"
@@ -33,6 +32,14 @@ DEFAULT_VIS_TIMEOUT_S = 60
 ID_Stored = []
 hasID = False
 
+class ID_Backend():
+  def __init__(self, id ,response):
+    self.id = id;
+    self.response = response;
+  def getID(self):
+    return self.id
+  def getResponse(self):
+    return self.response
 
 def handle_args():
     argp = argparse.ArgumentParser(
@@ -78,12 +85,14 @@ if __name__ == "__main__":
         body = json.loads(msg_in.get_body())
         msg_id = body['msg_id']
         msg_response = None
-        for stored in range(0, len(ID_Stored)):
+        for stored in ID_Stored:
+          print "msg_id: " + str(len(ID_Stored))
           if stored.getID() == msg_id: 
             msg_response = stored.getResponse()
             hasID = True
             print "yes"
             break
+        print "break done"
         if not hasID: 
           print "no"
           msg_op = body['op']
@@ -94,46 +103,52 @@ if __name__ == "__main__":
             msg_scheme = body['scheme']
             msg_netloc = body['netloc'] 
             msg_response = create_ops.do_create(msg_scheme, msg_netloc,table, msg_user_id, msg_name, response)
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "delete_by_id":
             print "delete by id"
             msg_user_id = body['id']
             msg_response = delete_ops.delete_by_id(table, msg_user_id, response)
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "delete_by_name":
             print "delete by name"
             msg_name = body['name']
             msg_response = delete_ops.delete_by_name(table, msg_name, response)
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "retrieve_by_id":
             print "retrieve by id"
             msg_user_id = body['id']
             msg_response = retrieve_ops.retrieve_by_id(table, msg_user_id, response)
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "retrieve_by_name":
             print "retrieve by name"
             msg_name = body['name']
             msg_response = retrieve_ops.retrieve_by_name(table, msg_name, response)
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "retrieve":
             print "retrieve"
             msg_response = retrieve_ops.retrieve_users(table, response)
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "add_activity":
             print "add activity"
             msg_user_id = body['id']
             msg_activity = body['activity']
             msg_response = update_ops.add_activity(table, msg_user_id, msg_activity, response)
-
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "del_activity":
             print "delete activity"
             msg_user_id = body['id']
             msg_activity = body['activity']
             msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
-
-          q_in.delete_message(msg_in)
-          msg = boto.sqs.message.Message()
-          msg_response['msg_id'] = msg_id
-          print "msg_response", msg_response
-          msg_response_json = json.dumps(msg_response)
-          msg.set_body(msg_response_json)
-          q_out.write(msg)
-          wait_start = time.time()
-          hasID = False
+            ID_Stored.append(ID_Backend(msg_id,msg_response))
+        q_in.delete_message(msg_in)
+        msg = boto.sqs.message.Message()
+        msg_response['msg_id'] = msg_id
+        print "msg_response", msg_response
+        msg_response_json = json.dumps(msg_response)
+        msg.set_body(msg_response_json)
+        q_out.write(msg)
+        wait_start = time.time()
+        hasID = False
       elif time.time() - wait_start > MAX_TIME_S:
           print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
           break
