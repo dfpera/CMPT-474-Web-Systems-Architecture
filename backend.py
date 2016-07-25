@@ -20,7 +20,6 @@ import delete_ops
 import update_ops
 import retrieve_ops
 from bottle import response
-import urlparse
 AWS_REGION = "us-west-2"
 TABLE_NAME_BASE = "activities"
 Q_IN_NAME_BASE = "a3_back_in"
@@ -30,15 +29,15 @@ MAX_TIME_S = 3600 # One hour
 MAX_WAIT_S = 20 # SQS sets max. of 20 s
 DEFAULT_VIS_TIMEOUT_S = 60
 ID_Stored = []
-hasID = False
+has_stored_id = False
 
 class ID_Backend():
   def __init__(self, id ,response):
     self.id = id;
     self.response = response;
-  def getID(self):
+  def get_id(self):
     return self.id
-  def getResponse(self):
+  def get_response(self):
     return self.response
 
 def handle_args():
@@ -47,7 +46,7 @@ def handle_args():
     argp.add_argument('suffix', help="Suffix for queue base ({0}) and table base ({1})".format(Q_IN_NAME_BASE, TABLE_NAME_BASE))
     return argp.parse_args()
 
-def connectQueue(name):
+def connect_queue(name):
   try:
         conn = boto.sqs.connect_to_region(AWS_REGION)
         if conn == None:
@@ -61,7 +60,7 @@ def connectQueue(name):
         sys.stderr.write(str(e))
         sys.exit(1)
 
-def connectTable(name):
+def connect_table(name):
   try:
         conn = boto.dynamodb2.connect_to_region(AWS_REGION)
         if conn == None:
@@ -76,8 +75,8 @@ def connectTable(name):
 
 if __name__ == "__main__":
     args = handle_args()
-    q_in, q_out= connectQueue(args.suffix)
-    table = connectTable(args.suffix)
+    q_in, q_out= connect_queue(args.suffix)
+    table = connect_table(args.suffix)
     wait_start = time.time()
     while True:
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
@@ -87,11 +86,11 @@ if __name__ == "__main__":
         msg_response = None
         for stored in ID_Stored:
           print "msg_id: " + str(len(ID_Stored))
-          if stored.getID() == msg_id: 
-            msg_response = stored.getResponse()
-            hasID = True
+          if stored.get_id() == msg_id: 
+            msg_response = stored.get_response()
+            has_stored_id = True
             break
-        if not hasID: 
+        if not has_stored_id: 
           msg_op = body['op']
           if msg_op == "create_user":
             msg_user_id = body['id']
@@ -140,7 +139,7 @@ if __name__ == "__main__":
         msg.set_body(msg_result_json)
         q_out.write(msg)
         wait_start = time.time()
-        hasID = False
+        has_stored_id = False
       elif time.time() - wait_start > MAX_TIME_S:
           print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
           break
