@@ -257,7 +257,7 @@ def clear_duplicate_response(id):
         histories.remove(history)
 
 
-class histories():
+class History():
   def __init__(self, id_a, id_b, action):
     self.id_a = id_a
     self.id_b = id_b
@@ -282,4 +282,4 @@ class histories():
 def set_dup_DS(action, sent_a, sent_b):
   message_IDa = sent_a.id
   message_IDb = sent_b.id
-  histories.append(histories(message_IDa, message_IDb, action))
+  histories.append(History(message_IDa, message_IDb, action))
