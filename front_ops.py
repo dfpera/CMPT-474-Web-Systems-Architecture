@@ -13,6 +13,7 @@ from bottle import post, get, put, delete, request, response
 
 # Local modules
 import SendMsg
+from gevent.event import AsyncResult
 
 # Constants
 AWS_REGION = "us-west-2"
@@ -207,45 +208,100 @@ def write_to_queues(msg_a, msg_b):
    Manage the data structures for detecting the first and second
    responses and any duplicate responses.
 '''
+global history = [] 
 
-# Define any necessary data structures globally here
 
 def is_first_response(id):
     # EXTEND:
     # Return True if this message is the first response to a request
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+          return i.getFirstResponse()
 
 def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+          return i.getSecondResponse()
 
 def get_response_action(id):
     # EXTEND:
     # Return the action for this message
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        return i.getAction()
 
 def get_partner_response(id):
     # EXTEND:
     # Return the id of the partner for this message, if any
-    pass
+    for i in history:
+      if i.getIDa() == id:
+        return i.getIDb()
+      elif i.getIDb() == id:
+        return i.getIDa()
 
 def mark_first_response(id):
     # EXTEND:
     # Update the data structures to note that the first response has been received
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        i.setFirstResponse() = True
+
 
 def mark_second_response(id):
     # EXTEND:
     # Update the data structures to note that the second response has been received
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        i.setSecondResponse() = True
+
 
 def clear_duplicate_response(id):
     # EXTEND:
     # Do anything necessary (if at all) when a duplicate response has been received
+    for i in history:
+      if i.setFirstResponse() = False and i.setSecondResponse() = False
+        history.remove(i)
+
     pass
 
+
+class History(object):
+  def _init_(self, id_a, id_b, action):
+    self.id_a = id_a
+    self.id_b = id_b
+    self.action = action
+    self.first_response = False
+    self.second_response = False
+
+  def getIDa():
+    return self.id_a
+  def getIDb():
+    return self.id_b
+  def getFirstResponse():
+    return self.first_response
+  def getSecondResponse():
+    return self.second_response
+  def setFirstResponse():
+    self.first_response = True
+  def setSecondResponse():
+    self.second_response = True
+  def getAction():
+    return self.action
+
+
+
+
+
+
 def set_dup_DS(action, sent_a, sent_b):
+  messageAID = sent_a.get_body()['msg_id']
+  messageBID = sent_b.get_body()['msg_id']
+  history.append(History(messageAID, messageBID, action))
+
+
+
     '''
        EXTEND:
        Set up the data structures to identify and detect duplicates
@@ -259,4 +315,3 @@ def set_dup_DS(action, sent_a, sent_b):
                msg_id attribute of the JSON object returned by the
                response from the backend code that you write.
     '''
-    pass
