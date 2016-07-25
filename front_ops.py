@@ -65,7 +65,6 @@ def create_route():
     id = request.json["id"] # In JSON, id is already an integer
     name = request.json["name"]
     print "creating id {0}, name {1}\n".format(id, name)
-    print "request", request.urlparts.scheme
     message_dict = {'op': 'create_user', 'id': id, 'name': name, 'scheme': request.urlparts.scheme, 'netloc':request.urlparts.netloc}
     msgConstruction(message_dict)
 
