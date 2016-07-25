@@ -56,8 +56,13 @@ def msgConstruction(message_dict):
   # msg_b
   msg_b = boto.sqs.message.Message()
   msg_b.set_body(message_json)
-  send_msg_ob.send_msg(msg_a, msg_b)
-  #return result
+  result = send_msg_ob.send_msg(msg_a, msg_b)
+  print result['result'] 
+  return make_response(result, response)
+
+def make_response(result, response):
+  response.status = result['status']
+  return result['result'] 
 
 '''
 # EXTEND:
@@ -207,26 +212,35 @@ def write_to_queues(msg_a, msg_b):
    Manage the data structures for detecting the first and second
    responses and any duplicate responses.
 '''
-global history = [] 
+history = []
 
 
 def is_first_response(id):
     # EXTEND:
     # Return True if this message is the first response to a request
+    print "check is first response ", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
-          return i.getFirstResponse()
+          if not i.getFirstResponse(): 
+            return True
+    return False
+
+
 
 def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
+    print "check is second response ", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
-          return i.getSecondResponse()
+          if not i.getSecondResponse(): 
+            return True
+    return False
 
 def get_response_action(id):
     # EXTEND:
     # Return the action for this message
+    print "get_response_action ", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
         return i.getAction()
@@ -234,6 +248,7 @@ def get_response_action(id):
 def get_partner_response(id):
     # EXTEND:
     # Return the id of the partner for this message, if any
+    print "get_partner_response", id
     for i in history:
       if i.getIDa() == id:
         return i.getIDb()
@@ -243,50 +258,48 @@ def get_partner_response(id):
 def mark_first_response(id):
     # EXTEND:
     # Update the data structures to note that the first response has been received
+    print "mark_first_response", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
-        i.setFirstResponse() = True
+        i.setFirstResponse()
 
 
 def mark_second_response(id):
     # EXTEND:
     # Update the data structures to note that the second response has been received
+    print "mark_second_response", id
     for i in history:
       if i.getIDa() == id or i.getIDb() == id:
-        i.setSecondResponse() = True
+        i.setSecondResponse()
 
 
 def clear_duplicate_response(id):
     # EXTEND:
     # Do anything necessary (if at all) when a duplicate response has been received
-    for i in history:
-      if i.setFirstResponse() = False and i.setSecondResponse() = False
-        history.remove(i)
-
     pass
 
 
-class History(object):
-  def _init_(self, id_a, id_b, action):
+class History():
+  def __init__(self, id_a, id_b, action):
+    print "New history ", id_a, id_b
     self.id_a = id_a
     self.id_b = id_b
     self.action = action
     self.first_response = False
     self.second_response = False
-
-  def getIDa():
+  def getIDa(self):
     return self.id_a
-  def getIDb():
+  def getIDb(self):
     return self.id_b
-  def getFirstResponse():
+  def getFirstResponse(self):
     return self.first_response
-  def getSecondResponse():
+  def getSecondResponse(self):
     return self.second_response
-  def setFirstResponse():
+  def setFirstResponse(self):
     self.first_response = True
-  def setSecondResponse():
+  def setSecondResponse(self):
     self.second_response = True
-  def getAction():
+  def getAction(self):
     return self.action
 
 
@@ -295,22 +308,8 @@ class History(object):
 
 
 def set_dup_DS(action, sent_a, sent_b):
-  messageAID = sent_a.get_body()['msg_id']
-  messageBID = sent_b.get_body()['msg_id']
+  messageAID = sent_a.id
+  messageBID = sent_b.id
+  print "Aid: ", messageAID
+  print "Bid: ", messageBID
   history.append(History(messageAID, messageBID, action))
-
-
-
-    '''
-       EXTEND:
-       Set up the data structures to identify and detect duplicates
-       action: The action to perform on receipt of the response.
-               Opaque data type: Simply save it, do not interpret it.
-       sent_a: The boto.sqs.message.Message() that was sent to a3_in_a.
-       sent_b: The boto.sqs.message.Message() that was sent to a3_in_b.
-       
-               The .id field of each of these is the message ID assigned
-               by SQS to each message.  These ids will be in the
-               msg_id attribute of the JSON object returned by the
-               response from the backend code that you write.
-    '''

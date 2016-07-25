@@ -72,27 +72,22 @@ def get_responses(q_out):
         if msg_out:
             body = json.loads(msg_out.get_body())
             id = body['msg_id']
-
             with SendMsg.guard(guard_resps) as gr:
                 if is_first_response(id):
-                    print "Routing respond msg_id {0} as first response".format(id)
                     async_res = get_response_action(id)
                     mark_first_response(id)
-                    async_res.set(body)
+                    a = async_res.set(body)
+                    print a
                 elif is_second_response(id):
-                    print "Second response {0} for {1} ignored".format(id, get_partner_response(id))
                     mark_second_response(id)
                 else:
-                    print "Ignoring duplicate msg id {0}".format(id)
                     clear_duplicate_response(id)
 
-            #q_out.delete_message(msg_out)
+            q_out.delete_message(msg_out)
             wait_start = time.time()
         elif time.time() - wait_start > MAX_TIME_S:
-             print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
-             return
+            return
         else:
-            print "Waited {0} s with no msg".format(MAX_WAIT_S)
             pass
 
 def parse_args():

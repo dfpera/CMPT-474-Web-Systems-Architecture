@@ -97,7 +97,6 @@ if __name__ == "__main__":
           print "no"
           msg_op = body['op']
           if msg_op == "create_user":
-            print "create"
             msg_user_id = body['id']
             msg_name = body['name']
             msg_scheme = body['scheme']
@@ -105,47 +104,44 @@ if __name__ == "__main__":
             msg_response = create_ops.do_create(msg_scheme, msg_netloc,table, msg_user_id, msg_name, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "delete_by_id":
-            print "delete by id"
             msg_user_id = body['id']
             msg_response = delete_ops.delete_by_id(table, msg_user_id, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "delete_by_name":
-            print "delete by name"
             msg_name = body['name']
             msg_response = delete_ops.delete_by_name(table, msg_name, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "retrieve_by_id":
-            print "retrieve by id"
             msg_user_id = body['id']
             msg_response = retrieve_ops.retrieve_by_id(table, msg_user_id, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "retrieve_by_name":
-            print "retrieve by name"
             msg_name = body['name']
             msg_response = retrieve_ops.retrieve_by_name(table, msg_name, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "retrieve":
-            print "retrieve"
             msg_response = retrieve_ops.retrieve_users(table, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "add_activity":
-            print "add activity"
             msg_user_id = body['id']
             msg_activity = body['activity']
             msg_response = update_ops.add_activity(table, msg_user_id, msg_activity, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
           elif msg_op == "del_activity":
-            print "delete activity"
             msg_user_id = body['id']
             msg_activity = body['activity']
             msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
         q_in.delete_message(msg_in)
         msg = boto.sqs.message.Message()
-        msg_response['msg_id'] = msg_id
-        print "msg_response", msg_response
-        msg_response_json = json.dumps(msg_response)
-        msg.set_body(msg_response_json)
+        msg_result = {}
+        msg_result['result'] = msg_response
+        msg_result['msg_id'] = msg_id
+        msg_result['status'] = response.status
+        print "status: ", response.status
+        print "msg_result", msg_result
+        msg_result_json = json.dumps(msg_result)
+        msg.set_body(msg_result_json)
         q_out.write(msg)
         wait_start = time.time()
         hasID = False
