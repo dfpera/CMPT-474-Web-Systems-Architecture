@@ -13,6 +13,7 @@ from bottle import post, get, put, delete, request, response
 
 # Local modules
 import SendMsg
+from gevent.event import AsyncResult
 
 # Constants
 AWS_REGION = "us-west-2"
@@ -42,10 +43,17 @@ def health_check():
     response.status = 200
     return "Healthy"
 
+'''
+Construct message msg_a and msg_b to be sent to queue a3_in_a and a3_in_b
+PARAM: Python dictionary of operation to be perfomed
+RETURN: Python object response from backend.py 
+'''
 def msgConstruction(message_dict):
   message_json=json.dumps(message_dict)
+  # msg_a
   msg_a = boto.sqs.message.Message()
   msg_a.set_body(message_json)
+  # msg_b
   msg_b = boto.sqs.message.Message()
   msg_b.set_body(message_json)
   send_msg_ob.send_msg(msg_a, msg_b)
@@ -54,6 +62,11 @@ def msgConstruction(message_dict):
 '''
 # EXTEND:
 # Define all the other REST operations here ...
+'''
+
+'''
+Invokes message to create user in the backend db
+RETURN: N/A
 '''
 @post('/users')
 def create_route():
@@ -68,49 +81,77 @@ def create_route():
     message_dict = {'op': 'create_user', 'id': id, 'name': name, 'scheme': request.urlparts.scheme, 'netloc':request.urlparts.netloc}
     msgConstruction(message_dict)
 
+'''
+Invokes message to retrieve user by id from backend db
+RETURN: N/A
+'''
 @get('/users/<id>')
 def get_id_route(id):
     id = int(id)
-    print "Retrieve by id: " + str(id)
+    print "Retrieve by id: ".format(id)
     message_dict = {'op': 'retrieve_by_id', 'id': id}
     msgConstruction(message_dict)
 
+'''
+Invokes message to retrieve all users from backend db
+RETURN: N/A
+'''
 @get('/users')
 def get_users_route():
-    print "Retrieve all users"
+    print "Retrieve all users."
     message_dict = {'op': 'retrieve'}
     msgConstruction(message_dict)
 
+'''
+Invokes message to retrieve user by name from backend db
+RETURN: N/A
+'''
 @get('/names/<name>')
 def get_name_route(name):
-    print "Retrieve by name: " + name
+    print "Retrieve by name: ".format(name)
     message_dict = {'op': 'retrieve_by_name', 'name': name}
     msgConstruction(message_dict)
 
+'''
+Invokes message to delete user by id from backend db
+RETURN: N/A
+'''
 @delete('/users/<id>')
 def delete_id_route(id):
     id = int(id)
-    print "delete", id
+    print "Delete user by id: ".format(id)
     message_dict = {'op': 'delete_by_id', 'id': id }
     msgConstruction(message_dict)
 
+'''
+Invokes message to delete user by name from backend db
+RETURN: N/A
+'''
 @delete('/names/<name>')
 def delete_name_route(name):
-    print "Deleting name {0}\n".format(name)
+    print "Deleting user by name {0}\n".format(name)
     message_dict = {'op': 'delete_by_name', 'name': name}
     msgConstruction(message_dict)
 
+'''
+Invokes message to add activity to user in backend db
+RETURN: N/A
+'''
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
     id = int(id)
-    print "adding activity for id {0}, activity {1}\n".format(id, activity)
+    print "Adding activity to id {0}, activity {1}\n".format(id, activity)
     message_dict = {'op': 'add_activity', 'id': id, 'activity': activity}
     msgConstruction(message_dict)
 
+'''
+Invokes message to delete activity from user in backend db
+RETURN: N/A
+'''
 @delete('/users/<id>/activities/<activity>')
 def del_activity_route(id, activity):
     id = int(id)
-    print "deleting activity for id {0}, activity {1}\n".format(id, activity)
+    print "Deleting activity from id {0}, activity {1}\n".format(id, activity)
     message_dict = {'op': 'del_activity', 'id': id, 'activity': activity}
     msgConstruction(message_dict)
 
@@ -166,45 +207,100 @@ def write_to_queues(msg_a, msg_b):
    Manage the data structures for detecting the first and second
    responses and any duplicate responses.
 '''
+global history = [] 
 
-# Define any necessary data structures globally here
 
 def is_first_response(id):
     # EXTEND:
     # Return True if this message is the first response to a request
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+          return i.getFirstResponse()
 
 def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+          return i.getSecondResponse()
 
 def get_response_action(id):
     # EXTEND:
     # Return the action for this message
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        return i.getAction()
 
 def get_partner_response(id):
     # EXTEND:
     # Return the id of the partner for this message, if any
-    pass
+    for i in history:
+      if i.getIDa() == id:
+        return i.getIDb()
+      elif i.getIDb() == id:
+        return i.getIDa()
 
 def mark_first_response(id):
     # EXTEND:
     # Update the data structures to note that the first response has been received
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        i.setFirstResponse() = True
+
 
 def mark_second_response(id):
     # EXTEND:
     # Update the data structures to note that the second response has been received
-    pass
+    for i in history:
+      if i.getIDa() == id or i.getIDb() == id:
+        i.setSecondResponse() = True
+
 
 def clear_duplicate_response(id):
     # EXTEND:
     # Do anything necessary (if at all) when a duplicate response has been received
+    for i in history:
+      if i.setFirstResponse() = False and i.setSecondResponse() = False
+        history.remove(i)
+
     pass
 
+
+class History(object):
+  def _init_(self, id_a, id_b, action):
+    self.id_a = id_a
+    self.id_b = id_b
+    self.action = action
+    self.first_response = False
+    self.second_response = False
+
+  def getIDa():
+    return self.id_a
+  def getIDb():
+    return self.id_b
+  def getFirstResponse():
+    return self.first_response
+  def getSecondResponse():
+    return self.second_response
+  def setFirstResponse():
+    self.first_response = True
+  def setSecondResponse():
+    self.second_response = True
+  def getAction():
+    return self.action
+
+
+
+
+
+
 def set_dup_DS(action, sent_a, sent_b):
+  messageAID = sent_a.get_body()['msg_id']
+  messageBID = sent_b.get_body()['msg_id']
+  history.append(History(messageAID, messageBID, action))
+
+
+
     '''
        EXTEND:
        Set up the data structures to identify and detect duplicates
@@ -218,4 +314,3 @@ def set_dup_DS(action, sent_a, sent_b):
                msg_id attribute of the JSON object returned by the
                response from the backend code that you write.
     '''
-    pass
