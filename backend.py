@@ -90,11 +90,8 @@ if __name__ == "__main__":
           if stored.getID() == msg_id: 
             msg_response = stored.getResponse()
             hasID = True
-            print "yes"
             break
-        print "break done"
         if not hasID: 
-          print "no"
           msg_op = body['op']
           if msg_op == "create_user":
             msg_user_id = body['id']
@@ -133,12 +130,11 @@ if __name__ == "__main__":
             msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
         q_in.delete_message(msg_in)
-        msg = boto.sqs.message.Message()
         msg_result = {}
+        msg = boto.sqs.message.Message()
         msg_result['result'] = msg_response
-        msg_result['msg_id'] = msg_id
         msg_result['status'] = response.status
-        print "status: ", response.status
+        msg_result['msg_id'] = msg_id
         print "msg_result", msg_result
         msg_result_json = json.dumps(msg_result)
         msg.set_body(msg_result_json)

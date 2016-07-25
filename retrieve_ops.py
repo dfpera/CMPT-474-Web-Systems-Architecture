@@ -38,6 +38,7 @@ def retrieve_users(table, response):
       "type": "users",
       "id": int(item["id"])
     })
+  response.status = 200
   return {"data": obj}
 
 def retrieve_by_name(table, name, response):
