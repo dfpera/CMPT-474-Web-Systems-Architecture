@@ -78,6 +78,7 @@ if __name__ == "__main__":
     q_in, q_out= connect_queue(args.suffix)
     table = connect_table(args.suffix)
     wait_start = time.time()
+    print "Backend is running..."
     while True:
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
       if msg_in:
@@ -85,7 +86,6 @@ if __name__ == "__main__":
         msg_id = body['msg_id']
         msg_response = None
         for stored in ID_Stored:
-          print "msg_id: " + str(len(ID_Stored))
           if stored.get_id() == msg_id: 
             msg_response = stored.get_response()
             has_stored_id = True
@@ -134,7 +134,6 @@ if __name__ == "__main__":
         msg_result['result'] = msg_response
         msg_result['status'] = response.status
         msg_result['msg_id'] = msg_id
-        print "msg_result", msg_result
         msg_result_json = json.dumps(msg_result)
         msg.set_body(msg_result_json)
         q_out.write(msg)
