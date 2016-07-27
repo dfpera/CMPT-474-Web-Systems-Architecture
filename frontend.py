@@ -72,6 +72,7 @@ def get_responses(q_out):
         if msg_out:
             body = json.loads(msg_out.get_body())
             id = body['msg_id']
+
             with SendMsg.guard(guard_resps) as gr:
                 if is_first_response(id):
                     print "Routing respond msg_id {0} as first response".format(id)
