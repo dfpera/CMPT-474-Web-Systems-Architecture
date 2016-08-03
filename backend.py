@@ -30,13 +30,20 @@ MAX_WAIT_S = 20 # SQS sets max. of 20 s
 DEFAULT_VIS_TIMEOUT_S = 60
 ID_Stored = []
 has_stored_id = False
+ID_Pended = []
+has_pended_id = False
+next_opnum = 1
+is_next_opnum = False
 
 class ID_Backend():
-  def __init__(self, id ,response):
+  def __init__(self, id, opnum, response, status):
     self.id = id;
+    self.opnum = opnum;
     self.response = response;
   def get_id(self):
     return self.id
+  def get_opnum(self):
+  	return self.opnum
   def get_response(self):
     return self.response
 
@@ -80,17 +87,18 @@ if __name__ == "__main__":
     wait_start = time.time()
     print "Backend is running..."
     while True:
-      msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
-      if msg_in:
-        body = json.loads(msg_in.get_body())
-        msg_id = body['msg_id']
-        msg_response = None
-        for stored in ID_Stored:
-          if stored.get_id() == msg_id: 
-            msg_response = stored.get_response()
-            has_stored_id = True
+    	if len(ID_Pended) > 0:
+    		msg_pended = {}
+    		for pended in ID_Pended:
+          if pended.get_opnum() == next_opnum: 
+            # msg_response = stored.get_response()
+            is_next_opnum = True
+            msg_pended = pended
             break
-        if not has_stored_id: 
+        if is_next_opnum:
+        	body = json.loads(msg_pended.get_body())
+        	msg_id = body['msg_id']
+        	msg_response = None
           msg_op = body['op']
           if msg_op == "create_user":
             msg_user_id = body['id']
@@ -128,12 +136,77 @@ if __name__ == "__main__":
             msg_activity = body['activity']
             msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
             ID_Stored.append(ID_Backend(msg_id,msg_response))
-        q_in.delete_message(msg_in)
+          ID_Pended.remove(msg_pended)
+          next_opnum = next_opnum + 1
+          is_next_opnum = False
+
+      elif len(ID_Pended) == 0 or (not is_next_opnum):
+	      msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
+	      if msg_in:
+	        body = json.loads(msg_in.get_body())
+	        msg_id = body['msg_id']
+	        msg_response = None
+	        for stored in ID_Stored:
+	          if stored.get_id() == msg_id: 
+	            msg_response = stored.get_response()
+	            response.staturs
+	            has_stored_id = True
+	            break
+	        if not has_stored_id:
+	        	msg_opnum = body['opnum']
+        		for pended in ID_Pended:
+          		if pended.get_opnum() == msg_opnum: 
+            		# msg_response = stored.get_response()
+            		has_pended_id = True
+            		break
+	          if (not has_pended_id) and msg_opnum > ID_Stored[-1].get_opnum() + 1:
+	        		ID_Pended.append(ID_Backend(msg_id, msg_opnum, msg_response))
+	        	elif (not has_pended_id) and msg_opnum == ID_Stored[-1].get_opnum() + 1:
+		          msg_op = body['op']
+		          if msg_op == "create_user":
+		            msg_user_id = body['id']
+		            msg_name = body['name']
+		            msg_scheme = body['scheme']
+		            msg_netloc = body['netloc'] 
+		            msg_response = create_ops.do_create(msg_scheme, msg_netloc,table, msg_user_id, msg_name, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "delete_by_id":
+		            msg_user_id = body['id']
+		            msg_response = delete_ops.delete_by_id(table, msg_user_id, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "delete_by_name":
+		            msg_name = body['name']
+		            msg_response = delete_ops.delete_by_name(table, msg_name, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "retrieve_by_id":
+		            msg_user_id = body['id']
+		            msg_response = retrieve_ops.retrieve_by_id(table, msg_user_id, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "retrieve_by_name":
+		            msg_name = body['name']
+		            msg_response = retrieve_ops.retrieve_by_name(table, msg_name, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "retrieve":
+		            msg_response = retrieve_ops.retrieve_users(table, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "add_activity":
+		            msg_user_id = body['id']
+		            msg_activity = body['activity']
+		            msg_response = update_ops.add_activity(table, msg_user_id, msg_activity, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          elif msg_op == "del_activity":
+		            msg_user_id = body['id']
+		            msg_activity = body['activity']
+		            msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
+		            ID_Stored.append(ID_Backend(msg_id, msg_opnum, msg_response))
+		          next_opnum = next_opnum + 1
+	        q_in.delete_message(msg_in)
         msg_result = {}
         msg = boto.sqs.message.Message()
         msg_result['result'] = msg_response
         msg_result['status'] = response.status
         msg_result['msg_id'] = msg_id
+        msg_result['opnum'] = msg_opnum
         msg_result_json = json.dumps(msg_result)
         msg.set_body(msg_result_json)
         q_out.write(msg)
