@@ -54,9 +54,10 @@ def handle_args():
 def insertNewOperation(info):
   global opnums
   opnums.append(info)
-  opnums.sorted(opnums, key=lambda k:k['opnum'])
+  opnums = sorted(opnums, key=lambda k:k['opnum'])
 
 def run_message(body):
+  global has_stored_id
   msg_id = body['msg_id']
   msg_response = None
   for stored in ID_Stored:
@@ -144,8 +145,6 @@ def connect_table(name):
         sys.exit(1)
 
 if __name__ == "__main__":
-    global opnums
-    global seq_num
     args = handle_args()
     q_in, q_out= connect_queue(args.suffix)
     table = connect_table(args.suffix)
@@ -160,14 +159,19 @@ if __name__ == "__main__":
         opnum_msg = get_first_msg["opnum"]
         while seq_num >=  opnum_msg:
           if seq_num == get_first_msg["opnum"]:
+            print "now_seq_num", seq_num
             run_message(get_first_msg)
             opnums.pop(0)
             seq_num += 1
           elif seq_num > get_first_msg["opnum"]:
+            print "seq_num", get_first_msg["opnum"]
             run_message(get_first_msg)
             opnums.pop(0)
-          get_first_msg = opnums[0]
-          opnum_msg = get_first_msg["opnum"]
+          if len(opnums) != 0:
+            get_first_msg = opnums[0]
+            opnum_msg = get_first_msg["opnum"]
+          else:
+            break
       elif time.time() - wait_start > MAX_TIME_S:
           print "\nNo messages on input queue for {0} seconds. Server no longer reading response queue {1}.".format(MAX_TIME_S, q_out.name)
           break
