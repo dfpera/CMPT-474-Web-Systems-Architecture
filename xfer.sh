@@ -5,6 +5,6 @@ then
   exit 1
 fi
 
-KEY_FILE=
+KEY_FILE='/Users/sophiezhao/Desktop/CMPT474/aws.pem'
 
 scp -i $KEY_FILE backend.py create_ops.py delete_ops.py duplicator.py front_ops.py frontend.py front_ops.py retrieve_ops.py SendMsg.py update_ops.py counterlast.py kazooclientlast.py ubuntu@$1:/home/ubuntu
