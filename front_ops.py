@@ -283,3 +283,16 @@ def set_dup_DS(action, sent_a, sent_b):
   message_IDa = sent_a.id
   message_IDb = sent_b.id
   histories.append(History(message_IDa, message_IDb, action))
+
+'''
+   Define a ZooKeeper operation counter as global variable seq_num
+'''
+def setup_op_counter():
+    global seq_num
+    zkcl = send_msg_ob.get_zkcl()
+    if not zkcl.exists('/SeqNum'):
+        zkcl.create('/SeqNum', "0")
+    else:
+        zkcl.set('/SeqNum', "0")
+
+    seq_num = zkcl.Counter('/SeqNum')
