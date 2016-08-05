@@ -69,6 +69,7 @@ Invokes message to create user in the backend db
 '''
 @post('/users')
 def create_route():
+    global seq_num
     ct = request.get_header('content-type')
     if ct != 'application/json':
         return abort(response, 400, [
@@ -86,6 +87,7 @@ Invokes message to retrieve user by id from backend db
 '''
 @get('/users/<id>')
 def get_id_route(id):
+    global seq_num
     id = int(id)
     print "Retrieve by id: ".format(id)
     seq_num += 1
@@ -97,6 +99,7 @@ Invokes message to retrieve all users from backend db
 '''
 @get('/users')
 def get_users_route():
+    global seq_num
     print "Retrieve all users."
     seq_num += 1
     message_dict = {'op': 'retrieve', 'opnum': seq_num}
@@ -107,6 +110,7 @@ Invokes message to retrieve user by name from backend db
 '''
 @get('/names/<name>')
 def get_name_route(name):
+    global seq_num
     print "Retrieve by name: ".format(name)
     seq_num += 1
     message_dict = {'op': 'retrieve_by_name', 'name': name, 'opnum': seq_num}
@@ -117,6 +121,7 @@ Invokes message to delete user by id from backend db
 '''
 @delete('/users/<id>')
 def delete_id_route(id):
+    global seq_num
     id = int(id)
     print "Delete user by id: ".format(id)
     seq_num += 1
@@ -128,6 +133,7 @@ Invokes message to delete user by name from backend db
 '''
 @delete('/names/<name>')
 def delete_name_route(name):
+    global seq_num
     print "Deleting user by name {0}\n".format(name)
     seq_num += 1
     message_dict = {'op': 'delete_by_name', 'name': name, 'opnum': seq_num}
@@ -138,6 +144,7 @@ Invokes message to add activity to user in backend db
 '''
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
+    global seq_num
     id = int(id)
     print "Adding activity to id {0}, activity {1}\n".format(id, activity)
     seq_num += 1
@@ -149,6 +156,7 @@ Invokes message to delete activity from user in backend db
 '''
 @delete('/users/<id>/activities/<activity>')
 def del_activity_route(id, activity):
+    global seq_num
     id = int(id)
     print "Deleting activity from id {0}, activity {1}\n".format(id, activity)
     seq_num += 1
