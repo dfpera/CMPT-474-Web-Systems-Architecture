@@ -202,19 +202,8 @@ def is_first_response(id):
     # Return True if this message is the first response to a request
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-          if not history.get_hasFirstResponse(): 
-            return True
-    return False
-
-
-
-def is_first_response(id):
-    # EXTEND:
-    # Return True if this message is the first response to a request
-    for history in histories:
-      if history.get_id_a() == id or history.get_id_b() == id:
-          if not history.get_hasFirstResponse(): 
-            return True
+        if not history.get_firstResponse(): 
+          return True
     return False
 
 
@@ -223,10 +212,9 @@ def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
     for history in histories:
-      if history.get_id_a() == id or history.get_id_b() == id:
-        if history.get_hasFirstResponse() and (not history.get_hasSecondResponse()):
-          if history.get_first() != id:
-            return True
+      if history.get_firstResponse():
+        if get_partner_response(history.get_firstResponse()) == id:
+          return True
     return False
 
 def get_response_action(id):
@@ -250,10 +238,9 @@ def mark_first_response(id):
     # Update the data structures to note that the first response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        if not history.get_hasFirstResponse():
-          history.set_hasFirstResponse()
-          history.set_first(id)
-          break
+        if not history.get_firstResponse():
+          history.set_firstResponse(id)
+        
 
 
 def mark_second_response(id):
@@ -261,49 +248,49 @@ def mark_second_response(id):
     # Update the data structures to note that the second response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        if history.get_hasFirstResponse() and (not history.get_hasSecondResponse()):
-          history.set_hasSecondResponse()
-          break
-
+        if not history.get_secondResponse():
+          history.set_secondResponse(id)
 
 def clear_duplicate_response(id):
     # EXTEND:
     # Do anything necessary (if at all) when a duplicate response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        if history.get_hasSecondResponse():
+        if history.get_secondResponse():
           histories.remove(history)
-          break
 
+def setup_op_counter():
+    global seq_num
+    zkcl = send_msg_ob.get_zkcl()
+    if not zkcl.exists('/SeqNum'):
+        zkcl.create('/SeqNum', "0")
+    else:
+        zkcl.set('/SeqNum', "0")
+    seq_num = zkcl.Counter('/SeqNum')
 
 class History():
-  def __init__(self, id_a, id_b, first, action):
+  def __init__(self, id_a, id_b, action):
     self.id_a = id_a
     self.id_b = id_b
-    self.first = first
     self.action = action
-    self.has_first_response = False
-    self.has_second_response = False
+    self.first_response = None
+    self.second_response = None
   def get_id_a(self):
     return self.id_a
   def get_id_b(self):
     return self.id_b
-  def get_first(self):
-    return self.first
-  def get_hasFirstResponse(self):
-    return self.has_first_response
-  def get_hasSecondResponse(self):
-    return self.has_second_response
-  def set_hasFirstResponse(self):
-    self.has_first_response = True
-  def set_hasSecondResponse(self):
-    self.has_second_response = True
-  def set_first(self, fid):
-    self.first = fid
+  def get_firstResponse(self):
+    return self.first_response
+  def get_secondResponse(self):
+    return self.second_response
+  def set_firstResponse(self, id):
+    self.first_response = id
+  def set_secondResponse(self, id):
+    self.second_response = id
   def getAction(self):
     return self.action
     
 def set_dup_DS(action, sent_a, sent_b):
   message_IDa = sent_a.id
   message_IDb = sent_b.id
-  histories.append(History(message_IDa, message_IDb, None, action))
+  histories.append(History(message_IDa, message_IDb, action))
