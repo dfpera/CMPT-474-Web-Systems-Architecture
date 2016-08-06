@@ -208,12 +208,24 @@ def is_first_response(id):
 
 
 
+def is_first_response(id):
+    # EXTEND:
+    # Return True if this message is the first response to a request
+    for history in histories:
+      if history.get_id_a() == id or history.get_id_b() == id:
+          if not history.get_hasFirstResponse(): 
+            return True
+    return False
+
+
+
 def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-          if not history.get_hasSecondResponse(): 
+        if history.get_hasFirstResponse() and (not history.get_hasSecondResponse()):
+          if history.get_first() != id:
             return True
     return False
 
@@ -238,7 +250,10 @@ def mark_first_response(id):
     # Update the data structures to note that the first response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        history.set_hasFirstResponse()
+        if not history.get_hasFirstResponse():
+          history.set_hasFirstResponse()
+          history.set_first(id)
+          break
 
 
 def mark_second_response(id):
@@ -246,7 +261,9 @@ def mark_second_response(id):
     # Update the data structures to note that the second response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        history.set_hasSecondResponse()
+        if history.get_hasFirstResponse() and (not history.get_hasSecondResponse()):
+          history.set_hasSecondResponse()
+          break
 
 
 def clear_duplicate_response(id):
@@ -254,13 +271,16 @@ def clear_duplicate_response(id):
     # Do anything necessary (if at all) when a duplicate response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        histories.remove(history)
+        if history.get_hasSecondResponse():
+          histories.remove(history)
+          break
 
 
 class History():
-  def __init__(self, id_a, id_b, action):
+  def __init__(self, id_a, id_b, first, action):
     self.id_a = id_a
     self.id_b = id_b
+    self.first = first
     self.action = action
     self.has_first_response = False
     self.has_second_response = False
@@ -268,6 +288,8 @@ class History():
     return self.id_a
   def get_id_b(self):
     return self.id_b
+  def get_first(self):
+    return self.first
   def get_hasFirstResponse(self):
     return self.has_first_response
   def get_hasSecondResponse(self):
@@ -276,10 +298,12 @@ class History():
     self.has_first_response = True
   def set_hasSecondResponse(self):
     self.has_second_response = True
+  def set_first(self, fid):
+    self.first = fid
   def getAction(self):
     return self.action
     
 def set_dup_DS(action, sent_a, sent_b):
   message_IDa = sent_a.id
   message_IDb = sent_b.id
-  histories.append(History(message_IDa, message_IDb, action))
+  histories.append(History(message_IDa, message_IDb, None, action))
