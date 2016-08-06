@@ -23,6 +23,7 @@ Q_IN_NAME_BASE = 'a3_in'
 Q_OUT_NAME = 'a3_out'
 q_out = None
 histories = []
+seq_num = 0
 
 try:
     conn = boto.sqs.connect_to_region(AWS_REGION)
@@ -70,6 +71,7 @@ Invokes message to create user in the backend db
 '''
 @post('/users')
 def create_route():
+    global seq_num
     ct = request.get_header('content-type')
     if ct != 'application/json':
         return abort(response, 400, [
@@ -78,7 +80,8 @@ def create_route():
     id = request.json["id"] # In JSON, id is already an integer
     name = request.json["name"]
     print "creating id {0}, name {1}\n".format(id, name)
-    message_dict = {'op': 'create_user', 'id': id, 'name': name, 'scheme': request.urlparts.scheme, 'netloc':request.urlparts.netloc, 'opnum':seq_num}
+    seq_num += 1
+    message_dict = {'op': 'create_user', 'id': id, 'name': name, 'scheme': request.urlparts.scheme, 'netloc':request.urlparts.netloc, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -86,9 +89,11 @@ Invokes message to retrieve user by id from backend db
 '''
 @get('/users/<id>')
 def get_id_route(id):
+    global seq_num
     id = int(id)
     print "Retrieve by id: ".format(id)
-    message_dict = {'op': 'retrieve_by_id', 'id': id, 'opnum':seq_num}
+    seq_num += 1
+    message_dict = {'op': 'retrieve_by_id', 'id': id, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -96,8 +101,10 @@ Invokes message to retrieve all users from backend db
 '''
 @get('/users')
 def get_users_route():
+    global seq_num
     print "Retrieve all users."
-    message_dict = {'op': 'retrieve', 'opnum':seq_num}
+    seq_num += 1
+    message_dict = {'op': 'retrieve', 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -105,8 +112,11 @@ Invokes message to retrieve user by name from backend db
 '''
 @get('/names/<name>')
 def get_name_route(name):
+    global seq_num
     print "Retrieve by name: ".format(name)
-    message_dict = {'op': 'retrieve_by_name', 'name': name, 'opnum':seq_num}
+    seq_num += 1
+    print "seq_nue", seq_num.value
+    message_dict = {'op': 'retrieve_by_name', 'name': name, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -114,9 +124,11 @@ Invokes message to delete user by id from backend db
 '''
 @delete('/users/<id>')
 def delete_id_route(id):
+    global seq_num
     id = int(id)
     print "Delete user by id: ".format(id)
-    message_dict = {'op': 'delete_by_id', 'id': id, 'opnum':seq_num }
+    seq_num += 1
+    message_dict = {'op': 'delete_by_id', 'id': id, 'opnum':seq_num.value }
     return msg_construction(message_dict)
 
 '''
@@ -124,8 +136,10 @@ Invokes message to delete user by name from backend db
 '''
 @delete('/names/<name>')
 def delete_name_route(name):
+    global seq_num
     print "Deleting user by name {0}\n".format(name)
-    message_dict = {'op': 'delete_by_name', 'name': name, 'opnum':seq_num}
+    seq_num += 1
+    message_dict = {'op': 'delete_by_name', 'name': name, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -133,9 +147,11 @@ Invokes message to add activity to user in backend db
 '''
 @put('/users/<id>/activities/<activity>')
 def add_activity_route(id, activity):
+    global seq_num
     id = int(id)
     print "Adding activity to id {0}, activity {1}\n".format(id, activity)
-    message_dict = {'op': 'add_activity', 'id': id, 'activity': activity, 'opnum':seq_num}
+    seq_num += 1
+    message_dict = {'op': 'add_activity', 'id': id, 'activity': activity, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -143,9 +159,11 @@ Invokes message to delete activity from user in backend db
 '''
 @delete('/users/<id>/activities/<activity>')
 def del_activity_route(id, activity):
+    global seq_num
     id = int(id)
     print "Deleting activity from id {0}, activity {1}\n".format(id, activity)
-    message_dict = {'op': 'del_activity', 'id': id, 'activity': activity, 'opnum':seq_num}
+    seq_num += 1
+    message_dict = {'op': 'del_activity', 'id': id, 'activity': activity, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
 '''
@@ -179,6 +197,7 @@ def set_send_msg(send_msg_ob_p):
 '''
 
 def write_to_queues(msg_a, msg_b):
+  global seq_num
   try:
     conn = boto.sqs.connect_to_region(AWS_REGION)
     if conn == None:
@@ -188,7 +207,6 @@ def write_to_queues(msg_a, msg_b):
     qin_b = conn.create_queue("a3_in_b")
     qin_a.write(msg_a)
     qin_b.write(msg_b)
-    seq_num += 1
   except Exception as e:
     sys.stderr.write("Exception connecting to SQS\n")
     sys.stderr.write(str(e))
@@ -270,6 +288,7 @@ def setup_op_counter():
         zkcl.set('/SeqNum', "0")
     seq_num = zkcl.Counter('/SeqNum')
 
+
 class History():
   def __init__(self, id_a, id_b, action):
     self.id_a = id_a
@@ -300,19 +319,6 @@ def set_dup_DS(action, sent_a, sent_b):
 '''
   Define a Zookeeper operations counter as global variable seq_num
 '''
-def setup_op_counter();
-  global seq_num
-  zkcl = send_msg_ob.get_zkcl()
-  if not zkcl.exists('/SeqNum'):
-      zkcl.create('/SeqNum',"0")
-  else:
-    zkcl.set('/SeqNum',"0")
 
-  seq_num = zkcl.Counter('/SeqNum')
 
-#for a fresh, unique counter value
-seq_num += 1
-#the last vaule set by *this instance*
-v_local = seq_num.last_set
-#the last value set by *any instance*
-v_global = seq_num.value
+
