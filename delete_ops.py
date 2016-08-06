@@ -6,7 +6,7 @@ from boto.dynamodb2.exceptions import ItemNotFound
 
 def delete_by_id(table, id, response):
     try:
-        item = table.get_item(id = id)
+        item = table.get_item(id = id, consistent = True)
         response.status = 200
         item.delete()
         return {"data": {
