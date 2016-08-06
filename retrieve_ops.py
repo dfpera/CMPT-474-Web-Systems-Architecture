@@ -7,7 +7,7 @@ import json
 
 def retrieve_by_id(table, id, response):
   try:
-    item = table.get_item(id = id)
+    item = table.get_item(id = id, consistent = True)
     response.status = 200 # item found
     activities = item['activities']
     json_activities = []

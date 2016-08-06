@@ -5,7 +5,7 @@ from boto.dynamodb2.exceptions import ItemNotFound
 
 def do_create(scheme, netloc, table, id, name, response):
     try:
-        item = table.get_item(id = id)
+        item = table.get_item(id = id, consistent = True)
         if item["name"] != name:
             response.status = 400
             return {"errors": [{
