@@ -91,7 +91,7 @@ Invokes message to retrieve user by id from backend db
 def get_id_route(id):
     global seq_num
     id = int(id)
-    print "Retrieve by id: ".format(id)
+    print "Retrieve by id: {0}".format(id)
     seq_num += 1
     message_dict = {'op': 'retrieve_by_id', 'id': id, 'opnum':seq_num.value}
     return msg_construction(message_dict)
@@ -113,7 +113,7 @@ Invokes message to retrieve user by name from backend db
 @get('/names/<name>')
 def get_name_route(name):
     global seq_num
-    print "Retrieve by name: ".format(name)
+    print "Retrieve by name: {0}".format(name)
     seq_num += 1
     print "seq_nue", seq_num.value
     message_dict = {'op': 'retrieve_by_name', 'name': name, 'opnum':seq_num.value}
@@ -126,7 +126,7 @@ Invokes message to delete user by id from backend db
 def delete_id_route(id):
     global seq_num
     id = int(id)
-    print "Delete user by id: ".format(id)
+    print "Delete user by id: {0}".format(id)
     seq_num += 1
     message_dict = {'op': 'delete_by_id', 'id': id, 'opnum':seq_num.value }
     return msg_construction(message_dict)
