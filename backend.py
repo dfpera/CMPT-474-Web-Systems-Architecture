@@ -28,9 +28,9 @@ Q_OUT_NAME = "a3_out"
 MAX_TIME_S = 3600 # One hour
 MAX_WAIT_S = 20 # SQS sets max. of 20 s
 DEFAULT_VIS_TIMEOUT_S = 60
-ID_Stored = []
+ID_Stored = [] # store the response
 has_stored_id = False
-opnums = []
+opnums = [] # store the operation
 seq_num = 1
 
 class ID_Backend():
@@ -51,21 +51,26 @@ def handle_args():
     argp.add_argument('suffix', help="Suffix for queue base ({0}) and table base ({1})".format(Q_IN_NAME_BASE, TABLE_NAME_BASE))
     return argp.parse_args()
 
-def insertNewOperation(info):
+# insert a new message in, and sort it by opnum
+def insert_new_operation(info):
   global opnums
   opnums.append(info)
   opnums = sorted(opnums, key=lambda k:k['opnum'])
 
+# run the message and handle the duplicate
 def run_message(body):
   global has_stored_id
   msg_id = body['msg_id']
   msg_response = None
+  # check this msg_id has been operated.
+  # if it is, get the response and status
   for stored in ID_Stored:
     if stored.get_id() == msg_id: 
       msg_response = stored.get_response()
       response.status = stored.get_status()
       has_stored_id = True
       break
+  # if not, we do new operate
   if not has_stored_id: 
     msg_op = body['op']
     if msg_op == "create_user":
@@ -104,6 +109,7 @@ def run_message(body):
       msg_activity = body['activity']
       msg_response = update_ops.del_activity(table, msg_user_id, msg_activity, response)
       ID_Stored.append(ID_Backend(msg_id,msg_response, response.status))
+  # send to a3_out
   msg_result = {}
   msg = boto.sqs.message.Message()
   msg_result['result'] = msg_response
@@ -116,7 +122,7 @@ def run_message(body):
   wait_start = time.time()
   has_stored_id = False
 
-
+# connect to queues
 def connect_queue(name):
   try:
         conn = boto.sqs.connect_to_region(AWS_REGION)
@@ -130,7 +136,7 @@ def connect_queue(name):
         sys.stderr.write("Exception connecting to queue {0}\n".format(Q_IN_NAME_BASE + name))
         sys.stderr.write(str(e))
         sys.exit(1)
-
+#connect to table
 def connect_table(name):
   try:
         conn = boto.dynamodb2.connect_to_region(AWS_REGION)
@@ -153,17 +159,17 @@ if __name__ == "__main__":
       msg_in = q_in.read(wait_time_seconds=MAX_WAIT_S, visibility_timeout=DEFAULT_VIS_TIMEOUT_S)
       if msg_in:
         body = json.loads(msg_in.get_body())
-        insertNewOperation(body)
+        insert_new_operation(body)
         q_in.delete_message(msg_in)
         get_first_msg = opnums[0]
         opnum_msg = get_first_msg["opnum"]
         while seq_num >=  opnum_msg:
-          if seq_num == get_first_msg["opnum"]:
+          if seq_num == get_first_msg["opnum"]:# run the message that we never runned
             print "now_seq_num", seq_num
             run_message(get_first_msg)
             opnums.pop(0)
             seq_num += 1
-          elif seq_num > get_first_msg["opnum"]:
+          elif seq_num > get_first_msg["opnum"]:# run the message with the smallest opnum
             print "seq_num", get_first_msg["opnum"]
             run_message(get_first_msg)
             opnums.pop(0)

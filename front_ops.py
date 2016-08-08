@@ -229,7 +229,7 @@ def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
     for history in histories:
-      if history.get_firstResponse() and (not history.get_secondResponse()):
+      if not history.get_secondResponse():
         if get_partner_response(history.get_firstResponse()) == id:
           return True
     return False
@@ -255,9 +255,8 @@ def mark_first_response(id):
     # Update the data structures to note that the first response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        if not history.get_firstResponse():
-          history.set_firstResponse(id)
-          break
+        history.set_firstResponse(id)
+        break
         
 
 
@@ -266,9 +265,8 @@ def mark_second_response(id):
     # Update the data structures to note that the second response has been received
     for history in histories:
       if history.get_id_a() == id or history.get_id_b() == id:
-        if not history.get_secondResponse():
-          history.set_secondResponse(id)
-          break
+        history.set_secondResponse(id)
+        break
 
 def clear_duplicate_response(id):
     # EXTEND:
