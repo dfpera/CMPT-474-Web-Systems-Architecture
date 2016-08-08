@@ -1,4 +1,3 @@
-
 '''
    Ops for the frontend of Assignment 3, Summer 2016 CMPT 474.
 '''
@@ -91,7 +90,7 @@ Invokes message to retrieve user by id from backend db
 def get_id_route(id):
     global seq_num
     id = int(id)
-    print "Retrieve by id: {0}".format(id)
+    print "Retrieve by id: {0}\n".format(id)
     seq_num += 1
     message_dict = {'op': 'retrieve_by_id', 'id': id, 'opnum':seq_num.value}
     return msg_construction(message_dict)
@@ -113,9 +112,8 @@ Invokes message to retrieve user by name from backend db
 @get('/names/<name>')
 def get_name_route(name):
     global seq_num
-    print "Retrieve by name: {0}".format(name)
+    print "Retrieve by name: {0}\n".format(name)
     seq_num += 1
-    print "seq_nue", seq_num.value
     message_dict = {'op': 'retrieve_by_name', 'name': name, 'opnum':seq_num.value}
     return msg_construction(message_dict)
 
@@ -126,7 +124,7 @@ Invokes message to delete user by id from backend db
 def delete_id_route(id):
     global seq_num
     id = int(id)
-    print "Delete user by id: {0}".format(id)
+    print "Delete user by id: {0}\n".format(id)
     seq_num += 1
     message_dict = {'op': 'delete_by_id', 'id': id, 'opnum':seq_num.value }
     return msg_construction(message_dict)
@@ -197,7 +195,6 @@ def set_send_msg(send_msg_ob_p):
 '''
 
 def write_to_queues(msg_a, msg_b):
-  global seq_num
   try:
     conn = boto.sqs.connect_to_region(AWS_REGION)
     if conn == None:
@@ -232,7 +229,7 @@ def is_second_response(id):
     # EXTEND:
     # Return True if this message is the second response to a request
     for history in histories:
-      if history.get_firstResponse():
+      if history.get_firstResponse() and (not history.get_secondResponse()):
         if get_partner_response(history.get_firstResponse()) == id:
           return True
     return False
@@ -260,6 +257,7 @@ def mark_first_response(id):
       if history.get_id_a() == id or history.get_id_b() == id:
         if not history.get_firstResponse():
           history.set_firstResponse(id)
+          break
         
 
 
@@ -270,6 +268,7 @@ def mark_second_response(id):
       if history.get_id_a() == id or history.get_id_b() == id:
         if not history.get_secondResponse():
           history.set_secondResponse(id)
+          break
 
 def clear_duplicate_response(id):
     # EXTEND:
@@ -278,6 +277,7 @@ def clear_duplicate_response(id):
       if history.get_id_a() == id or history.get_id_b() == id:
         if history.get_secondResponse():
           histories.remove(history)
+          break
 
 def setup_op_counter():
     global seq_num
